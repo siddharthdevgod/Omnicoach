@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="OMNIPOTENT">
+<meta name="theme-color" content="#F2F2F7">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<title>OMNIPOTENT</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --canvas:#E7E7EB; --bg:#F2F2F7; --card:#FFFFFF; --ink:#000;
+  --ink2:#6E6E73; --ink3:rgba(60,60,67,.42); --sep:rgba(60,60,67,.14);
+  --fill:rgba(120,120,128,.12); --fill2:rgba(120,120,128,.20); --track:rgba(120,120,128,.16);
+  --ok:#4E8A62; --warn:#A8742A; --bad:#B2463F;
+  --text:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Inter",system-ui,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--canvas)}
+body{font-family:var(--text);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;
+  background:radial-gradient(1200px 600px at 50% -10%,#F7F7F9 0%,rgba(247,247,249,0) 70%),var(--canvas);
+  display:flex;align-items:center;justify-content:center;padding:24px}
+button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input{font-family:inherit}
+.num,.big{font-variant-numeric:tabular-nums}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+svg.i.s{width:16px;height:16px;stroke-width:2}
+svg.i.xs{width:13px;height:13px;stroke-width:2.4}
+
+/* stage */
+.stage{display:flex;gap:56px;align-items:center;justify-content:center}
+.side{width:300px}
+.side .k{font:600 12px/1 var(--text);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:10px}
+.side h1{font:700 32px/1.05 var(--display);letter-spacing:-.025em}
+.side p{font:400 14px/1.5 var(--text);color:var(--ink2);margin-top:12px}
+.side ol{font:400 13.5px/1.6 var(--text);color:var(--ink2);margin:14px 0 0 18px}
+.side ol b{color:#000;font-weight:600}
+.side .ctl{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.side .ctl button{height:34px;padding:0 14px;border-radius:17px;background:#fff;font:600 13px/1 var(--text);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.1)}
+.side .ctl button.on{background:#000;color:#fff}
+
+/* device */
+.phone{width:390px;height:844px;border-radius:55px;position:relative;flex:none;
+  box-shadow:0 0 0 10px #0E0E10,0 0 0 11px #3A3A3D,0 0 0 12.5px #CFCFD4,0 40px 80px -20px rgba(0,0,0,.35),0 18px 40px -18px rgba(0,0,0,.25)}
+.screen{position:absolute;inset:0;border-radius:55px;overflow:hidden;background:var(--bg);isolation:isolate}
+.scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:54px 16px 124px}
+.scroll::-webkit-scrollbar{display:none}
+.status{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 46px;z-index:40;pointer-events:none}
+.status .time{font:600 17px/1 var(--display)}
+.status .sys{display:flex;gap:6px;align-items:center}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:41}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:139px;height:5px;border-radius:3px;background:#000;z-index:80;pointer-events:none}
+.edge-top{position:absolute;top:0;left:0;right:0;height:64px;z-index:30;pointer-events:none;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  background:linear-gradient(180deg,rgba(242,242,247,.92) 0%,rgba(242,242,247,.55) 60%,rgba(242,242,247,0) 100%);
+  -webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 100%);mask-image:linear-gradient(180deg,#000 55%,transparent 100%)}
+.edge-bot{position:absolute;bottom:0;left:0;right:0;height:120px;z-index:30;pointer-events:none;background:linear-gradient(0deg,rgba(242,242,247,.85) 0%,rgba(242,242,247,0) 100%)}
+@media (max-width:520px){
+  body{padding:0;display:block}
+  .stage{display:block}
+  .side{display:none}
+  .phone{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none}
+  .screen{border-radius:0}
+  .status,.island,.homebar{display:none}
+  .scroll{padding-top:calc(env(safe-area-inset-top) + 14px)}
+}
+
+/* glass */
+.glass{position:relative;isolation:isolate;background:rgba(255,255,255,.55);
+  -webkit-backdrop-filter:blur(18px) saturate(1.9) brightness(1.04);backdrop-filter:blur(18px) saturate(1.9) brightness(1.04);
+  box-shadow:0 12px 32px -6px rgba(0,0,0,.16),0 2px 6px rgba(0,0,0,.06),inset 0 1px .5px rgba(255,255,255,.95),inset 0 -1px 1px rgba(0,0,0,.035)}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+  background:linear-gradient(155deg,rgba(255,255,255,1) 0%,rgba(255,255,255,.35) 28%,rgba(0,0,0,.10) 62%,rgba(255,255,255,.8) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.gbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#000;flex:none}
+
+/* type */
+.lt{padding:6px 4px 14px}
+.lt-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.eyebrow{font:600 13px/1 var(--text);color:var(--ink2);margin-bottom:7px}
+.lt h1{font:700 34px/1.1 var(--display);letter-spacing:-.022em}
+.me{width:36px;height:36px;border-radius:50%;background:linear-gradient(160deg,#E9E9EE,#D1D1D6);display:grid;place-items:center;font:600 14px/1 var(--text);color:#3A3A3C;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08);cursor:pointer}
+.card{background:var(--card);border-radius:24px;padding:16px;margin-bottom:12px}
+.card.tap{cursor:pointer}
+.cap{display:flex;align-items:center;gap:6px;font:600 13px/1 var(--text);color:var(--ink2)}
+.cap .i{width:16px;height:16px;stroke-width:2;color:#000}
+.cap .r{margin-left:auto;font-weight:500;color:var(--ink2);display:flex;align-items:center;gap:2px}
+.big{font:700 44px/1 var(--display);letter-spacing:-.035em}
+.huge{font:700 64px/0.95 var(--display);letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.unit{font:600 17px/1 var(--text);color:var(--ink2);margin-left:5px;letter-spacing:-.01em}
+.sub{font:400 13px/1.38 var(--text);color:var(--ink2)}
+.h3{font:700 22px/1.15 var(--display);letter-spacing:-.02em}
+.section-h{display:flex;align-items:baseline;justify-content:space-between;padding:14px 4px 8px}
+.section-h h3{font:700 20px/1 var(--display);letter-spacing:-.02em}
+.section-h span,.section-h button{font:500 14px/1 var(--text);color:var(--ink2)}
+.section-h button{color:#000;font-weight:600}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;width:100%;border-radius:25px;font:600 17px/1 var(--text);letter-spacing:-.01em}
+.btn.black{background:#000;color:#fff;box-shadow:0 6px 16px -6px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.18)}
+.btn.grey{background:var(--fill);color:#000}
+.btn.sm{height:36px;border-radius:18px;font-size:15px;width:auto;padding:0 16px}
+.btn:active{transform:scale(.985)}
+.pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:16px;background:var(--fill);font:600 13px/1 var(--text);color:#000;white-space:nowrap;cursor:pointer}
+.pill.on{background:#000;color:#fff}
+.tag{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:12px;font:600 12px/1 var(--text);white-space:nowrap}
+.tag.dark{background:#000;color:#fff}
+.tag.soft{background:var(--fill);color:#000}
+.tag.line{box-shadow:inset 0 0 0 1px var(--sep);color:var(--ink2)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)} .dot.grey{background:#AEAEB2}
+.st{display:inline-flex;align-items:center;gap:6px;font:600 13px/1 var(--text);white-space:nowrap}
+.bar{height:6px;border-radius:3px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;background:#000;transition:width .5s}
+.bar.thick{height:10px;border-radius:5px}
+.bar.grey i{background:#8E8E93}
+.row{display:flex;align-items:center}
+.between{justify-content:space-between}
+.sep{border-top:.5px solid var(--sep)}
+
+/* omni line */
+.omni{display:flex;gap:12px;align-items:center;padding:12px 14px 12px 12px}
+.omni img{width:34px;height:34px;border-radius:50%;flex:none;box-shadow:0 0 0 .5px rgba(0,0,0,.1)}
+.omni p{font:400 15px/1.33 var(--text);letter-spacing:-.005em}
+.omni p b{font-weight:600}
+
+/* list rows (inset grouped) */
+.list{background:var(--card);border-radius:24px;padding:2px 16px;margin-bottom:12px}
+.li{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:.5px solid var(--sep);cursor:pointer;min-height:52px}
+.li:first-child{border-top:0}
+.li .n{font:600 16px/1.2 var(--text);letter-spacing:-.01em}
+.li .d{font:400 13px/1.3 var(--text);color:var(--ink2);margin-top:3px;font-variant-numeric:tabular-nums}
+.li .v{margin-left:auto;font:500 15px/1.2 var(--text);color:var(--ink2);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.li .chev{color:var(--ink3);width:16px;height:16px;stroke-width:2.2}
+.ic{width:32px;height:32px;border-radius:10px;background:#000;color:#fff;display:grid;place-items:center;flex:none}
+.ic .i{width:17px;height:17px;stroke-width:2}
+.ic.soft{background:var(--fill);color:#000}
+
+/* today */
+.mrow{display:flex;align-items:baseline;justify-content:space-between}
+.mname{font:600 15px/1 var(--text);letter-spacing:-.01em}
+.mval{font:600 15px/1 var(--text);font-variant-numeric:tabular-nums}
+.mval span{color:var(--ink2);font-weight:500}
+.minor{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}
+.minor .mname,.minor .mval{font-size:13px}
+.minor .mname{color:var(--ink2)}
+.meal{padding:13px 0;border-top:.5px solid var(--sep)}
+.meal:first-of-type{border-top:0;padding-top:4px}
+.meal-h{display:flex;align-items:center;justify-content:space-between}
+.meal-h .n{font:600 16px/1 var(--text)}
+.meal-h .k{font:600 15px/1 var(--text);font-variant-numeric:tabular-nums}
+.meal-h .k span{color:var(--ink2);font-weight:500;font-size:13px}
+.item{display:flex;justify-content:space-between;font:400 14px/1 var(--text);color:var(--ink2);padding:7px 0 0;font-variant-numeric:tabular-nums;cursor:pointer}
+.item b{font-weight:500;color:#000}
+.meal .pill{margin-top:10px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.tiles .card{margin:0;padding:14px;cursor:pointer}
+.tile .big{font-size:30px;margin:12px 0 5px}
+.tile .unit{font-size:14px}
+.glasses{display:flex;gap:3px;margin:10px 0 10px}
+.glasses i{flex:1;height:16px;border-radius:5px;background:var(--track)}
+.glasses i.on{background:#000}
+.stp2{display:flex;gap:8px}
+.stp2 button{flex:1;height:32px;border-radius:16px;background:var(--fill);display:grid;place-items:center}
+
+/* tab bar */
+.tabbar{position:absolute;left:14px;right:14px;bottom:22px;height:66px;border-radius:33px;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 6px}
+.tab{width:62px;height:54px;border-radius:27px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:rgba(0,0,0,.52);font:600 10px/1 var(--text);cursor:pointer}
+.tab .i{width:23px;height:23px}
+.tab.on{color:#000;background:rgba(120,120,128,.16)}
+.mic{width:56px;height:56px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;cursor:pointer;flex:none;
+  box-shadow:0 8px 18px -6px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 4px rgba(0,0,0,.4)}
+.mic .i{width:24px;height:24px;stroke-width:2}
+@media (max-width:520px){ .tabbar{bottom:calc(env(safe-area-inset-bottom) + 10px)} }
+
+/* layers: sheets, toasts */
+#layer{position:absolute;inset:0;z-index:70;pointer-events:none}
+#layer>*{pointer-events:auto}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.18);animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.sheet{position:absolute;left:8px;right:8px;bottom:8px;max-height:88%;border-radius:40px;padding:8px 18px 20px;display:flex;flex-direction:column;
+  background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(28px) saturate(2) brightness(1.05);backdrop-filter:blur(28px) saturate(2) brightness(1.05);
+  box-shadow:0 -10px 40px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.9);animation:up .28s cubic-bezier(.2,.9,.3,1)}
+.sheet .in{overflow-y:auto;scrollbar-width:none;flex:1;padding-bottom:2px}
+.sheet .in::-webkit-scrollbar{display:none}
+@keyframes up{from{transform:translateY(60px);opacity:.4}}
+.grabber{width:36px;height:5px;border-radius:3px;background:rgba(60,60,67,.3);margin:0 auto 10px;flex:none}
+.sh-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sh-top h2{font:700 22px/1.1 var(--display);letter-spacing:-.02em}
+.xbtn{width:34px;height:34px;border-radius:50%;background:var(--fill2);display:grid;place-items:center;color:rgba(0,0,0,.6);flex:none}
+.toast{position:absolute;left:14px;right:14px;top:58px;min-height:60px;border-radius:30px;display:flex;align-items:center;gap:12px;padding:9px 18px 9px 9px;animation:drop .3s cubic-bezier(.2,.9,.3,1)}
+@keyframes drop{from{transform:translateY(-24px);opacity:0}}
+.toast .tro{width:42px;height:42px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;flex:none}
+.toast .tro img{width:42px;height:42px;border-radius:50%}
+.toast small{display:block;font:600 11px/1 var(--text);color:var(--ink2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.toast b{font:600 15px/1.3 var(--text);letter-spacing:-.01em}
+.snack{position:absolute;left:50%;transform:translateX(-50%);bottom:100px;height:44px;border-radius:22px;display:flex;align-items:center;gap:14px;padding:0 8px 0 18px;white-space:nowrap;font:600 14px/1 var(--text);animation:fade .2s}
+.snack button{height:32px;padding:0 14px;border-radius:16px;background:#000;color:#fff;font:600 13px/1 var(--text)}
+@media (max-width:520px){ .toast{top:calc(env(safe-area-inset-top) + 8px)} }
+
+/* log sheet */
+.listen{display:flex;align-items:center;gap:10px;font:600 15px/1 var(--text)}
+.wave{display:flex;align-items:center;gap:3px;height:22px}
+.wave i{width:3px;height:22px;border-radius:2px;background:#000;animation:w 1.1s ease-in-out infinite}
+.wave.off i{animation:none;transform:scaleY(.3);background:var(--ink3)}
+@keyframes w{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.bigmic{width:72px;height:72px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;margin:4px auto 12px;box-shadow:0 10px 24px -8px rgba(0,0,0,.5)}
+.bigmic .i{width:30px;height:30px}
+.bigmic.rec{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 12px rgba(0,0,0,.06),0 10px 24px -8px rgba(0,0,0,.5)}}
+textarea.say{width:100%;border:0;background:rgba(255,255,255,.85);border-radius:20px;padding:14px 16px;font:600 19px/1.3 var(--display);letter-spacing:-.015em;resize:none;color:#000;outline:none;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.06)}
+textarea.say::placeholder{color:var(--ink3)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:10px -18px 0;padding:0 18px}
+.chips::-webkit-scrollbar{display:none}
+.chips .pill{background:rgba(255,255,255,.85);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.06);height:34px}
+.chips .pill.on{background:#000;color:#fff}
+.heard-h{display:flex;align-items:center;justify-content:space-between;padding:16px 4px 8px}
+.heard-h b{font:600 12px/1 var(--text);color:var(--ink2);letter-spacing:.06em;text-transform:uppercase}
+.heard-h span{font:500 12px/1 var(--text);color:var(--ink2)}
+.heard{background:rgba(255,255,255,.85);border-radius:22px;padding:2px 14px}
+.hrow{display:flex;gap:12px;padding:12px 0;border-top:.5px solid var(--sep);align-items:flex-start}
+.hrow:first-child{border-top:0}
+.hrow .t{font:600 15px/1.25 var(--text);letter-spacing:-.01em}
+.hrow .t span{color:var(--ink2);font-weight:500}
+.hrow .v{margin-left:auto;font:600 15px/1.25 var(--text);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hrow .lines{font:400 14px/1.5 var(--text);color:var(--ink2);margin-top:3px}
+
+/* train */
+.ex-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.reason{font:400 15px/1.38 var(--text);margin-top:10px}
+.last{font:400 13px/1.35 var(--text);color:var(--ink2);margin-top:6px;font-variant-numeric:tabular-nums}
+.mini-h{display:flex;justify-content:space-between;align-items:center;font:600 12px/1 var(--text);color:var(--ink2);letter-spacing:.05em;text-transform:uppercase}
+.wu{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:9px}
+.wu button{white-space:nowrap;height:34px;border-radius:11px;box-shadow:inset 0 0 0 1px var(--sep);display:flex;align-items:center;justify-content:center;gap:4px;font:600 13px/1 var(--text);font-variant-numeric:tabular-nums}
+.wu button.on{background:var(--fill);box-shadow:none;color:var(--ink2)}
+.sets{margin-top:14px;padding-top:10px;border-top:.5px solid var(--sep)}
+.set-cols{display:grid;grid-template-columns:22px 1fr 1fr 44px;gap:8px;font:600 11px/1 var(--text);color:var(--ink3);letter-spacing:.06em;text-transform:uppercase;padding:2px 0 6px}
+.set-cols span:nth-child(2),.set-cols span:nth-child(3){text-align:center}
+.set{display:grid;grid-template-columns:22px 1fr 1fr 44px;gap:8px;align-items:center;padding:4px 0}
+.set .no{font:600 15px/1 var(--text);color:var(--ink2);font-variant-numeric:tabular-nums}
+.stp{height:44px;border-radius:13px;background:var(--fill);display:flex;align-items:center;justify-content:space-between;padding:0 2px}
+.stp button{width:34px;height:40px;display:grid;place-items:center;color:rgba(0,0,0,.5)}
+.stp button:disabled{opacity:.3}
+.stp b{font:600 18px/1 var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stp b small{font-size:11px;color:var(--ink2);font-weight:500;margin-left:2px}
+.done{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(0,0,0,.18);display:grid;place-items:center;color:transparent}
+.done.on{background:#000;color:#fff;box-shadow:none}
+.done .i{width:19px;height:19px;stroke-width:2.6}
+.note{margin:3px 0 6px 30px;font:400 13px/1.38 var(--text);color:var(--ink2)}
+.note b{color:#000;font-weight:600}
+.note.callout{background:var(--bg);border-radius:12px;padding:9px 11px;color:#000}
+.coll{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.coll .n{font:600 16px/1.2 var(--text)}
+.coll .d{font:400 13px/1.3 var(--text);color:var(--ink2);margin-top:2px;font-variant-numeric:tabular-nums}
+.coll .cnt{margin-left:auto;font:600 13px/1 var(--text);color:var(--ink2);font-variant-numeric:tabular-nums}
+.segs{display:flex;gap:4px;margin:0 2px 14px}
+.segs i{flex:1;height:4px;border-radius:2px;background:var(--track)}
+.segs i.on{background:#000}
+.rest{position:absolute;left:12px;right:12px;bottom:22px;height:72px;border-radius:36px;z-index:55;display:flex;align-items:center;gap:12px;padding:0 10px 0 12px}
+.rest .rt{font:700 26px/1 var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rest .rl{font:500 12px/1 var(--text);color:var(--ink2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rest>div:nth-child(2){min-width:0;flex:1}
+.rest .rl b{color:#000;font-weight:600}
+.rest .acts{margin-left:auto;display:flex;gap:6px}
+.rest .acts button{white-space:nowrap;height:44px;border-radius:22px;padding:0 15px;font:600 15px/1 var(--text)}
+.rest .a1{background:rgba(120,120,128,.16)}
+.rest .a2{background:#000;color:#fff}
+@media (max-width:520px){ .rest{bottom:calc(env(safe-area-inset-bottom) + 10px)} }
+
+/* progress */
+.chart{display:block;width:100%;height:auto;margin-top:12px;overflow:visible}
+.legend2{display:flex;gap:14px;margin-top:10px;font:500 11px/1 var(--text);color:var(--ink2)}
+.legend2 span{display:flex;align-items:center;gap:5px}
+.stat3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.stat3>div{background:#fff;border-radius:18px;padding:12px}
+.stat3 .l{font:600 11px/1 var(--text);color:var(--ink2);letter-spacing:.04em;text-transform:uppercase}
+.stat3 .v{font:700 20px/1 var(--display);letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat3 .s{font:500 11px/1.2 var(--text);color:var(--ink2);margin-top:4px}
+.lbar{position:relative;height:6px;border-radius:3px;background:var(--track);margin-top:10px}
+.lbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:#000}
+.why .act{display:flex;gap:10px;align-items:center;margin-top:10px;padding:11px 12px;border-radius:14px;background:var(--bg);font:600 14px/1.35 var(--text)}
+.wkrow{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:.5px solid var(--sep)}
+.wkrow:first-of-type{border-top:0;padding-top:4px}
+.wkrow .ic{width:30px;height:30px;border-radius:50%}
+.wkrow p{font:400 15px/1.35 var(--text);letter-spacing:-.005em}
+.wkrow p b{font-weight:600}
+.fix{background:#000;color:#fff;border-radius:16px;padding:13px 14px;margin-top:6px;display:flex;gap:10px;align-items:center;font:500 14px/1.35 var(--text)}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.photo{aspect-ratio:3/4;border-radius:14px;background:linear-gradient(180deg,#E5E5EA,#D1D1D6);position:relative;overflow:hidden;display:grid;place-items:center;color:rgba(0,0,0,.25)}
+.photo svg{width:46%;height:auto}
+.photo span{position:absolute;left:8px;bottom:7px;font:600 11px/1 var(--text);color:#3A3A3C}
+.meas{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:12px}
+.meas .n{font:600 12px/1 var(--text);color:var(--ink2)}
+.meas .v{font:700 22px/1 var(--display);letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+.meas .v small{font:500 13px/1 var(--text);color:var(--ink2);margin-left:3px}
+.meas .c{font:600 12px/1 var(--text);margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* stack */
+.dose{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:.5px solid var(--sep)}
+.dose:first-of-type{border-top:0}
+.dose .n{font:600 16px/1.2 var(--text)}
+.dose .d{font:400 13px/1.3 var(--text);color:var(--ink2);margin-top:3px}
+.take{margin-left:auto;height:34px;padding:0 15px;border-radius:17px;background:#000;color:#fff;font:600 14px/1 var(--text);white-space:nowrap}
+.take.done{background:var(--fill);color:var(--ink2);display:flex;align-items:center;gap:5px;box-shadow:none;width:auto}
+.wk7{display:flex;gap:5px}
+.wk7 i{width:10px;height:10px;border-radius:50%;background:var(--track)}
+.wk7 i.on{background:#000}
+.wk7 i.na{background:transparent;box-shadow:inset 0 0 0 1.5px var(--track)}
+.math{background:var(--bg);border-radius:16px;padding:12px 14px;margin-top:12px}
+.math .st2{display:flex;gap:10px;padding:7px 0;font:400 14px/1.4 var(--text);border-top:.5px solid var(--sep)}
+.math .st2:first-child{border-top:0}
+.math .st2 em{font-style:normal;font:700 12px/1.6 var(--text);color:var(--ink2);width:16px;flex:none}
+.math .st2 b{font-weight:600}
+.sites{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.site{border-radius:14px;padding:10px 12px;box-shadow:inset 0 0 0 1px var(--sep);cursor:pointer}
+.site .n{font:600 14px/1.2 var(--text)}
+.site .d{font:500 12px/1.2 var(--text);color:var(--ink2);margin-top:3px}
+.site.next{background:#000;color:#fff;box-shadow:none}
+.site.next .d{color:rgba(255,255,255,.7)}
+.site.sel{box-shadow:inset 0 0 0 2px #000}
+.fine{font:400 12px/1.45 var(--text);color:var(--ink2);padding:4px 6px 0;text-align:center}
+
+/* forms */
+.seg{display:flex;background:var(--fill);border-radius:12px;padding:2px;gap:2px}
+.seg button{flex:1;height:32px;border-radius:10px;font:600 13px/1 var(--text);color:#000}
+.seg button.on{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.field{background:rgba(255,255,255,.9);border-radius:16px;padding:4px 14px;margin-top:10px;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.06)}
+.fr{display:flex;align-items:center;justify-content:space-between;min-height:48px;border-top:.5px solid var(--sep);gap:10px}
+.fr:first-child{border-top:0}
+.fr label{font:500 15px/1 var(--text)}
+.fr input{border:0;background:transparent;text-align:right;font:600 16px/1 var(--text);width:140px;outline:none;font-variant-numeric:tabular-nums;color:#000}
+.fr input.l{text-align:left;width:100%}
+.fr .u{font:500 14px/1 var(--text);color:var(--ink2)}
+.flabel{font:600 12px/1 var(--text);color:var(--ink2);letter-spacing:.05em;text-transform:uppercase;margin:16px 4px 0}
+.sw{width:51px;height:31px;border-radius:16px;background:var(--fill2);position:relative;flex:none;cursor:pointer;transition:background .2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15);transition:left .2s}
+.sw.on{background:#000}
+.sw.on::after{left:22px}
+.stepbig{display:flex;align-items:center;justify-content:center;gap:22px;margin:8px 0 6px}
+.stepbig button{width:48px;height:48px;border-radius:50%;background:var(--fill);display:grid;place-items:center}
+.stepbig .v{font:700 44px/1 var(--display);letter-spacing:-.03em;min-width:150px;text-align:center;font-variant-numeric:tabular-nums}
+.stepbig .v small{font:600 17px/1 var(--text);color:var(--ink2);margin-left:4px}
+
+/* onboarding */
+.ob{position:absolute;inset:0;background:var(--bg);z-index:60;display:flex;flex-direction:column;padding:62px 22px 34px;overflow-y:auto}
+@media (max-width:520px){ .ob{padding-top:calc(env(safe-area-inset-top) + 20px)} }
+.ob .progress{display:flex;gap:5px;margin:14px 0 26px}
+.ob .progress i{flex:1;height:4px;border-radius:2px;background:var(--track)}
+.ob .progress i.on{background:#000}
+.ob h1{font:700 32px/1.1 var(--display);letter-spacing:-.025em}
+.ob .lead{font:400 16px/1.45 var(--text);color:var(--ink2);margin-top:8px}
+.opt{display:flex;align-items:center;gap:14px;background:#fff;border-radius:20px;padding:16px;margin-top:10px;cursor:pointer;box-shadow:inset 0 0 0 1.5px transparent}
+.opt.on{box-shadow:inset 0 0 0 2px #000}
+.opt .ic{width:40px;height:40px;border-radius:12px}
+.opt .n{font:600 17px/1.2 var(--text)}
+.opt .d{font:400 13px/1.3 var(--text);color:var(--ink2);margin-top:2px}
+.days{display:flex;gap:6px;margin-top:20px}
+.days button{flex:1;height:52px;border-radius:14px;background:#fff;font:600 13px/1 var(--text)}
+.days button.on{background:#000;color:#fff}
+
+.stp .sin{width:100%;min-width:0;flex:1;border:0;background:transparent;text-align:center;font:600 18px/1 var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em;outline:none;color:#000;padding:0}
+.stp .sin::placeholder{color:var(--ink3);font-size:15px}
+.set{grid-template-columns:22px 1fr 1fr 44px}
+.stp button{width:30px;flex:none}
+.done{flex:none}
+a{color:inherit}
+input[type=number]::-webkit-inner-spin-button{display:none}
+.side .ctl button{margin-bottom:2px}
+.fitem{display:flex;justify-content:space-between;gap:14px;font:400 14px/1.3 var(--text);color:var(--ink2);padding:7px 0 0}
+.fitem b{font-weight:500;color:#000}
+.fitem span{text-align:right;max-width:52%}
+@media (max-width:520px){ .edge-top{height:calc(env(safe-area-inset-top) + 12px)} }
+.li>div:not(.ic):not(.sw){flex:1;min-width:0}
+.dim{z-index:60}.sheet{z-index:61}#lw-toast .toast{z-index:65}#lw-snack .snack{z-index:64}
+.mrow{gap:8px}.mval{white-space:nowrap}.mname{white-space:nowrap}
+.side{display:none}</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-today" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="4.5"/><path d="M3.5 9.5h17M8.5 2.5v3.5M15.5 2.5v3.5"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-train" viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></symbol>
+<symbol id="i-mic" viewBox="0 0 24 24"><rect x="8.75" y="2.75" width="6.5" height="11.5" rx="3.25"/><path d="M5.25 11a6.75 6.75 0 0 0 13.5 0M12 17.75v3.5"/></symbol>
+<symbol id="i-progress" viewBox="0 0 24 24"><path d="M3.5 17.5l5.25-5.25 4 3.5 7.75-8.25"/><path d="M15.25 7.5h5.25v5.25"/></symbol>
+<symbol id="i-stack" viewBox="0 0 24 24"><rect x="4" y="9.5" width="16" height="11" rx="3"/><path d="M7 9.5V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2.5M9 3.5h6M12 13v4M10 15h4"/></symbol>
+<symbol id="i-me" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.1"/><path d="M6.6 18.3c1.4-1.9 3.3-2.9 5.4-2.9s4 1 5.4 2.9"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9.5 5.5l6.5 6.5-6.5 6.5"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M3.75 8.75a2.25 2.25 0 0 1 2.25-2.25h1.9l1.6-2.25h5l1.6 2.25H18a2.25 2.25 0 0 1 2.25 2.25V17A2.25 2.25 0 0 1 18 19.25H6A2.25 2.25 0 0 1 3.75 17z"/><circle cx="12" cy="12.75" r="3.5"/></symbol>
+<symbol id="i-fork" viewBox="0 0 24 24"><path d="M7.25 3v18M4.5 3v4.75a2.75 2.75 0 0 0 5.5 0V3M17 21V3c-2.2 1.2-3.25 3.8-3.25 7v3.5H17"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M8.25 9.5a5.3 5.3 0 0 1 7.5 0M12 10l1.4-2.2"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.25s-6.25 6.6-6.25 11.1a6.25 6.25 0 0 0 12.5 0C18.25 9.85 12 3.25 12 3.25z"/></symbol>
+<symbol id="i-steps" viewBox="0 0 24 24"><path d="M8 3.5c1.9 0 3 1.9 3 4.5s-1 4.5-3 4.5-3-1.9-3-4.5 1.1-4.5 3-4.5zM5.5 15.5h5v1.5a2.5 2.5 0 0 1-5 0zM16 8.5c1.9 0 3 1.9 3 4.5s-1 4.5-3 4.5-3-1.9-3-4.5 1.1-4.5 3-4.5z"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19.5v-15M6 10.5l6-6 6 6"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4.5v15M6 13.5l6 6 6-6"/></symbol>
+<symbol id="i-flat" viewBox="0 0 24 24"><path d="M4.5 12h15M13.5 6l6 6-6 6"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.75 3.75h8.5v5.5a4.25 4.25 0 0 1-8.5 0zM7.75 5.75H4.5v1.5a3.5 3.5 0 0 0 3.5 3.5M16.25 5.75h3.25v1.5a3.5 3.5 0 0 1-3.5 3.5M12 13.5v3.75M8.5 20.25h7M9.25 17.25h5.5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4.5 11.5V10a3.5 3.5 0 0 1 3.5-3.5h11.5M16.5 3.5l3 3-3 3M19.5 12.5V14a3.5 3.5 0 0 1-3.5 3.5H4.5M7.5 20.5l-3-3 3-3"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="18" cy="12" r="1.3" fill="currentColor"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V3.75M5.5 4.5h11.25l-2.25 3.75 2.25 3.75H5.5"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2.75L5.5 13.25h6l-1 8 7.5-10.5h-6z"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="4.5"/><path d="M3.5 9.5h17M8.5 2.5v3.5M15.5 2.5v3.5"/></symbol>
+<symbol id="i-pill" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4"/><path d="M12 8v8"/></symbol>
+<symbol id="i-syringe" viewBox="0 0 24 24"><path d="M14.5 4.5l5 5M17 7l-9.5 9.5-3 .5.5-3L14.5 4.5M11 8l1.5 1.5M9 10l1.5 1.5M4.5 19.5l2-2"/></symbol>
+<symbol id="i-vial" viewBox="0 0 24 24"><path d="M9 3.5h6M10 3.5v3M14 3.5v3M8.5 6.5h7v12a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2zM8.5 12h7"/></symbol>
+<symbol id="i-ruler" viewBox="0 0 24 24"><rect x="2.5" y="7.5" width="19" height="9" rx="2"/><path d="M6.5 7.5v3M10 7.5v4.5M13.5 7.5v3M17 7.5v4.5"/></symbol>
+<symbol id="i-photo" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2H5zM10 20.5h4"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8M6 11.5H5.5a2 2 0 0 0-2 2V18a2.5 2.5 0 0 0 2.5 2.5h12a2.5 2.5 0 0 0 2.5-2.5v-4.5a2 2 0 0 0-2-2H18"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-body" viewBox="0 0 24 24"><circle cx="12" cy="4.8" r="2.2"/><path d="M8 21l1.2-8.5L7 9.5l5-1.5 5 1.5-2.2 3L16 21"/></symbol>
+<symbol id="i-person" viewBox="0 0 40 60"><circle cx="20" cy="10" r="7" fill="currentColor" stroke="none"/><path d="M8 58V36c0-8 5-14 12-14s12 6 12 14v22z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></symbol>
+<symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 8.5h13l-1 11.5a1.5 1.5 0 0 1-1.5 1.4H8a1.5 1.5 0 0 1-1.5-1.4zM9 8.5V7a3 3 0 0 1 6 0v1.5"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></symbol>
+</defs></svg>
+<div class="stage">
+  
+  <div class="phone" id="phone"><div class="screen" id="screen">
+    
+    <div class="scroll" id="scroll"></div>
+    <div class="edge-top"></div>
+    <div class="edge-bot"></div>
+    <div class="tabbar glass" id="tabbar"></div>
+    <div id="layer"></div>
+    
+  </div></div>
+</div>
+<script>
+const FIREBASE_CONFIG={apiKey:"AIzaSyAl-OhNJ8OUoWH6PB_PGk1YvGsIRrzEvkQ",authDomain:"omnipotent-7fbda.firebaseapp.com",projectId:"omnipotent-7fbda",storageBucket:"omnipotent-7fbda.firebasestorage.app",messagingSenderId:"152363375617",appId:"1:152363375617:web:c3be14f7249a178c847400"};
+/* ===== core: state, dates, engine ===== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const I=(n,c)=>`<svg class="i ${c||''}"><use href="#i-${n}"/></svg>`;
+const fmtN=n=>Math.round(n).toLocaleString('en-US');
+const r5=x=>Math.round(x/5)*5;
+const r1=x=>Math.round(x*10)/10;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+let S=null;            // the whole saved state
+let P=null;            // shortcut to S.plan
+let NOW_OVERRIDE=null; // demo only
+
+function now(){ return NOW_OVERRIDE?new Date(NOW_OVERRIDE.getTime()+(Date.now()-NOW_OVERRIDE._set)):new Date(); }
+function dkey(d){ d=d||now(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function pkey(k){ const [y,m,d]=k.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(k,n){ const d=pkey(k); d.setDate(d.getDate()+n); return dkey(d); }
+function dayDiff(a,b){ return Math.round((pkey(b)-pkey(a))/864e5); }
+function niceDate(k,withDay){ const d=pkey(k); return (withDay?DAYS[d.getDay()]+', ':'')+MON[d.getMonth()]+' '+d.getDate(); }
+function today(){ return dkey(); }
+function dow(k){ return pkey(k).getDay(); }
+function clock(t){ const d=new Date(t); let h=d.getHours(),m=d.getMinutes(); const ap=h>=12?'pm':'am'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; }
+function mmss(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+
+/* ---------- program calendar ---------- */
+function weekOf(k){ const d=dayDiff(P.start,k); return d<0?0:Math.floor(d/7)+1; }
+function phaseOf(w){ return P.phases.find(p=>w>=p.w[0]&&w<=p.w[1])||null; }
+function isDeload(w){ return P.deloads.includes(w); }
+function blockPos(w){ // 1..4 inside a build block
+  let last=0; for(const d of P.deloads){ if(d<w) last=d; } return Math.min(4,w-last); }
+function sessionFor(k){ const dn=DAYS[dow(k)]; const s=P.schedule.find(x=>x.day===dn); return s&&s.name!=='Rest'?s:null; }
+function rirFor(ex,w){
+  if(w<1) return ex.rir;
+  if(isDeload(w)) return '3-4';
+  const bp=blockPos(w), safe=/squat|deadlift/i.test(ex.name)&&!/hack/i.test(ex.name)||/romanian/i.test(ex.name);
+  let v; if(bp===1) v='3'; else if(bp===2) v='2'; else if(bp===3) v=ex.rir; else v=(ex.type==='bb_up'||ex.type==='bb_lo'||ex.main||ex.lo<=8)?'1':'0';
+  if(safe && (v==='0'||v==='1'||v==='0-1'||v==='1-2')) v='2';
+  return v;
+}
+/* the previous set to compare with: build-up i with build-up i, top set with top set */
+function prevSetFor(ex,tg,i,w){ if(!tg.prev) return null; if(!ex.scheme) return tg.prev.find(x=>x.n===i)||null;
+  const sc=schemeSets(ex,w), isTop=i===sc.length-1; if(isTop){ const pl=schemeSets(ex,tg.prevWeek||1).length-1; return tg.prev.find(x=>x.n===pl)||null; }
+  return tg.prev.find(x=>x.n===i)||null; }
+function NOWT(){ return now().getTime(); }
+function rirText(r){ return String(r).replace('-',' to '); }
+function repsFor(ex,w){
+  if(ex.scheme){ const t=ex.scheme[ex.scheme.length-1]; return [t.lo,t.hi]; }
+  if(ex.main && w>=11 && w<=14 && !isDeload(w)) return [4,6];
+  return [ex.lo,ex.hi];
+}
+function setsFor(ex,w){ if(ex.scheme) return isDeload(w)?ex.scheme.length-1:ex.scheme.length; return isDeload(w)?Math.max(1,Math.ceil(ex.sets/2)):ex.sets; }
+function schemeSets(ex,w){ if(!ex.scheme) return null; const s=ex.scheme.slice(); if(isDeload(w)) s.splice(s.length-2,1); return s; }
+/* per-set target: weight, reps, label */
+function setTarget(ex,tg,i,w){
+  const sc=schemeSets(ex,w);
+  if(!sc) return {w:tg.w,lo:tg.lo,hi:tg.hi,lbl:null,rir:null};
+  const st=sc[i]||sc[sc.length-1], last=i===sc.length-1, n=sc.length;
+  if(last) return isDeload(w)?{w:tg.w,lo:st.lo,hi:st.lo+1,lbl:'Top set, easy',rir:'3',top:true,easy:true}:{w:tg.w,lo:st.lo,hi:st.hi,lbl:st.lbl,rir:st.rir,top:true};
+  const pct=n===4?[0.6,0.75,0.88][i]:[0.65,0.82][i];
+  return {w:tg.w?r5(tg.w*pct):null,lo:st.r,hi:st.r,lbl:st.lbl,rir:st.rir};
+}
+
+/* ---------- logs helpers ---------- */
+function L(){ return S.logs; }
+function swapType(nm,base){ if(/\bDB\b|dumbbell/i.test(nm)) return 'db'; if(/leg press|hack|calf/i.test(nm)) return 'mach_lo'; if(/squat|deadlift|trap bar/i.test(nm)) return 'bb_lo'; if(/barbell|bench|EZ-bar|skull|standing barbell press/i.test(nm)) return 'bb_up'; return 'mach'; }
+function swappedEx(ex,nm){ const o=Object.assign({},ex,{name:nm,swapped:ex.name,type:swapType(nm,ex.type),note:'',cue:'Same sets and reps as the plan.',start:null}); delete o.scheme; if(ex.scheme){ o.sets=4; o.lo=6; o.hi=10; } return o; }
+function exList(sname){
+  return (P.sessions[sname]||[]).map(ex=>{
+    const sw=S.swaps&&S.swaps[ex.id];
+    return sw?swappedEx(ex,sw):ex;
+  });
+}
+function sessionsDone(){ return L().sessions.filter(s=>s.endedAt); }
+function lastSessionOf(name,beforeKey,skipDeload){
+  let xs=L().sessions.filter(s=>s.name===name&&s.endedAt&&(!beforeKey||s.date<beforeKey));
+  if(skipDeload){ const nd=xs.filter(s=>!isDeload(s.week)); if(nd.length) xs=nd; }
+  return xs.length?xs[xs.length-1]:null;
+}
+/* sets for one exercise in a session; with an exercise object, a swapped exercise never counts for the original */
+function workSets(sess,ex){ if(!sess) return []; const id=typeof ex==='string'?ex:ex.id, nm=typeof ex==='string'?null:ex.name;
+  return sess.sets.filter(s=>s.ex===id&&!s.warm&&(!nm||!s.name||s.name===nm)).sort((a,b)=>a.n-b.n); }
+function e1(w,r){ if(!w||!r) return 0; if(r>10) return w*(1+r/30); return w*36/(37-r); }
+function inc(ex){ return ex.type==='bb_lo'||ex.type==='mach_lo'?10:5; }
+function bestE1(exName,beforeT){
+  let b=0; for(const s of L().sessions) for(const x of s.sets){ if(x.warm||x.name!==exName) continue; if(beforeT&&x.t>=beforeT) continue; if(x.r<=10){ const v=e1(x.w,x.r+(x.rir||0)); if(v>b) b=v; } }
+  return b;
+}
+/* target for an exercise today: weight + rep goal + reason */
+function targetFor(ex,sname,k){
+  const w=weekOf(k), [lo,hi]=repsFor(ex,w);
+  let prev=lastSessionOf(sname,k,!isDeload(w)), ps=workSets(prev,ex);
+  for(let g=0;prev&&!ps.length&&g<12;g++){ prev=lastSessionOf(sname,prev.date,!isDeload(w)); ps=workSets(prev,ex); }
+  if(!ps.length){
+    if(ex.scheme) return {w:null,lo,hi,why:'First time: put in your own weights. Add weight every set, keep 2 reps in the tank, then go as heavy as you can on the top set for 4 to 6 reps.',prev:null};
+    return {w:null,lo,hi,why:'First time: put in the weight you use. Pick one you can do for '+hi+' reps with '+rirText(rirFor(ex,w))+' left in the tank. The app takes it from there.',prev:null};
+  }
+  if(ex.scheme){
+    let topS=null, src=prev;
+    while(src){ const xs=workSets(src,ex), ln=schemeSets(ex,src.week).length-1; topS=xs.find(x=>x.n===ln)||null; if(topS) break; src=lastSessionOf(sname,src.date,!isDeload(w)); }
+    if(!topS){ const mx=Math.max(...ps.map(x=>x.w)); return {w:null,lo,hi,why:'No top set logged last time. Build up again and finish with your heaviest set of 4 to 6. Last time you got to '+mx+' lb.',prev:ps}; }
+    let tw=topS.w, why;
+    if(isDeload(w)){ tw=r5(topS.w*0.9); why='Deload week. Top set at about 90% and stop 3 reps short.'; }
+    else if(topS.r>=hi){ tw=topS.w+inc(ex); why='You got '+topS.r+' on the top set last time, so +'+inc(ex)+' lb.'; }
+    else if(topS.r<lo){ tw=r5(topS.w*0.95); why='Top set was under '+lo+' reps. A little lighter, own the 4.'; }
+    else why='Same top set weight. Beat '+topS.r+' reps, at '+hi+' it goes up.';
+    return {w:tw,lo,hi,why,prev:ps,prevWeek:prev.week};
+  }
+  const lw=Math.max(...ps.map(s=>s.w)), top=ps.filter(s=>s.w===lw);
+  const allTop=top.length>=setsFor(ex,prev.week)&&top.every(s=>s.r>=hi);
+  const below=top.some(s=>s.r<lo);
+  let tw=lw, why;
+  if(isDeload(w)){ tw=r5(lw*0.9); why='Deload week. About 90% of last time, easy reps.'; }
+  else if(allTop){ tw=lw+inc(ex); why='You hit '+hi+' on every set last time, so +'+inc(ex)+' lb.'; }
+  else if(below){
+    const p2=lastSessionOf(sname,prev.date,true), ps2=workSets(p2,ex);
+    if(ps2.length&&ps2.some(s=>s.r<lo)){ tw=r5(lw*0.93); why='Two sessions under '+lo+' reps. Drop about 7% and build back.'; }
+    else why='Same weight. Get every set to '+lo+'+ reps.';
+  } else { const best=Math.max(...top.map(s=>s.r)); why=best>=hi?'Same weight. Get every set to '+hi+' reps, then it goes up.':'Same weight, beat '+best+' reps on at least one set.'; }
+  return {w:tw,lo,hi,why,prev:ps,prevWeek:prev.week};
+}
+function plates(w){
+  let side=(w-45)/2; if(side<0) return null; const out=[];
+  for(const p of [45,35,25,10,5,2.5]){ while(side>=p-0.001){ out.push(p); side-=p; } }
+  return {plates:out,left:Math.round(side*2*10)/10};
+}
+function plateText(w){ const p=plates(w); if(!p) return ''; if(!p.plates.length) return 'Empty bar';
+  const c={}; p.plates.forEach(x=>c[x]=(c[x]||0)+1);
+  return Object.keys(c).sort((a,b)=>b-a).map(x=>(c[x]>1?c[x]+'×':'')+x).join(' + ')+' a side'; }
+function warmups(ex,w){
+  if(ex.scheme) return [];
+  if(!(ex.type==='bb_up'||ex.type==='bb_lo')||!w||w<135) return [];
+  const xs=[[45,10],[r5(w*0.4),5],[r5(w*0.6),3],[r5(w*0.8),1]].filter((x,i)=>i===0||x[0]>45);
+  return xs;
+}
+
+/* ---------- food ---------- */
+function foodDay(k){ k=k||today(); const m=L().meals; if(!m[k]) m[k]={done:{},extra:[],free:false}; return m[k]; }
+function foodTargets(k){
+  const w=weekOf(k||today()), t={kcal:P.food.kcal,p:P.food.p,c:P.food.c,f:P.food.f};
+  if(w===P.dietBreak){ t.c+=P.food.breakAdd.c; t.f+=P.food.breakAdd.f; t.kcal+=P.food.breakAdd.c*4+P.food.breakAdd.f*9; t.brk=true; }
+  if(S.adj&&S.adj.c){ t.c+=S.adj.c; t.kcal+=S.adj.c*4; }
+  return t;
+}
+function eaten(k){
+  const d=foodDay(k), t={kcal:0,p:0,c:0,f:0};
+  P.food.meals.forEach((m,i)=>{ if(!d.done[i]) return;
+    if(d.free&&i===P.food.freeMeal.replaces){ t.kcal+=P.food.freeMeal.kcal; t.p+=50; t.c+=150; t.f+=70; return; }
+    t.kcal+=m.kcal; t.p+=m.p; t.c+=m.c; t.f+=m.f; });
+  d.extra.forEach(x=>{ t.kcal+=+x.kcal||0; t.p+=+x.p||0; });
+  return t;
+}
+function mealsDoneCount(k){ const d=foodDay(k); return P.food.meals.filter((m,i)=>d.done[i]).length; }
+
+/* ---------- body ---------- */
+function weights(){ return L().weights.slice().sort((a,b)=>a.d<b.d?-1:1); }
+function weightOn(k){ const x=L().weights.find(w=>w.d===k); return x?x.lb:null; }
+function trend(){ // MacroFactor-style smoothed trend, filled daily
+  const ws=weights(); if(!ws.length) return [];
+  const out=[]; let t=ws[0].lb, k=ws[0].d, i=0; const end=today();
+  while(k<=end){ const w=ws.find(x=>x.d===k); if(w) t=t+0.1*(w.lb-t); out.push({d:k,t:r1(t),lb:w?w.lb:null}); k=addDays(k,1); if(++i>800) break; }
+  return out;
+}
+function weekAvg(endKey){ const xs=[]; for(let i=0;i<7;i++){ const v=weightOn(addDays(endKey,-i)); if(v!=null) xs.push(v); } return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null; }
+
+/* ---------- stack ---------- */
+function stackItems(){ return S.stack; }
+function dueOn(it,k){
+  const f=it.freq||{kind:'daily'};
+  if(f.kind==='daily') return true;
+  if(f.kind==='weekly'||f.kind==='days') return (f.days||[]).includes(dow(k));
+  return false; // as needed
+}
+function dosesOn(it,k){ return L().doses.filter(d=>d.item===it.id&&d.d===k); }
+function lastDose(it){ const xs=L().doses.filter(d=>d.item===it.id); return xs.length?xs[xs.length-1]:null; }
+const SITES=[['glute-l','Left glute'],['glute-r','Right glute'],['delt-l','Left delt'],['delt-r','Right delt'],['quad-l','Left quad'],['quad-r','Right quad'],['vg-l','Left ventrogluteal'],['vg-r','Right ventrogluteal']];
+function siteName(id){ const s=SITES.find(x=>x[0]===id); return s?s[1]:''; }
+function nextSite(){ // least recently used across all injections
+  const last={}; L().doses.forEach(d=>{ if(d.site) last[d.site]=d.t; });
+  return SITES.slice().sort((a,b)=>(last[a[0]]||0)-(last[b[0]]||0))[0][0];
+}
+
+/* ---------- state ---------- */
+function freshState(plan,profile){
+  return {TRK:2,ONBOARDED:false,profile:profile,plan:plan,stack:JSON.parse(JSON.stringify(plan.stack)),swaps:{},adj:{c:0},
+    logs:{sessions:[],meals:{},water:{},waterTs:{},weights:[],waist:[],doses:[],checkins:[],sleep:{},sleepTs:{},del:{}},
+    prefs:{},savedAt:Date.now(),createdAt:Date.now()};
+}
+function setState(s){ S=s; P=S.plan; const l=S.logs; ['sleep','sleepTs','waterTs','del','water','meals'].forEach(k=>{ if(!l[k]) l[k]={}; }); }
+function tomb(id){ L().del[id]=Date.now(); }
+function untomb(id){ delete L().del[id]; }
+function mts(d,i){ if(!d.dts) d.dts={}; d.dts[i]=Date.now(); }
+/* close workouts left open on an earlier day: keep them if they have sets, drop them if empty */
+function closeStale(){ const k=today(); let ch=false;
+  L().sessions=L().sessions.filter(s=>{ if(s.endedAt||s.date>=k) return true; ch=true; if(!s.sets.length){ tomb(s.id); return false; } s.endedAt=Math.max(...s.sets.map(x=>x.t)); return true; });
+  if(ch) save(); }
+
+/* save hook: replaced by sync layer */
+let onSave=()=>{};
+function save(){ S.savedAt=Date.now(); try{ localStorage.setItem(cacheKey(),JSON.stringify(S)); }catch(e){} onSave(); }
+let CACHE_ID='demo';
+function cacheKey(){ return 'omni_trk_'+CACHE_ID; }
+
+/* merge two states (used on sync conflict). Logs are unioned by id/date. */
+function mergeStates(a,b){
+  const newer=(a.savedAt||0)>=(b.savedAt||0)?a:b, older=newer===a?b:a;
+  const out=JSON.parse(JSON.stringify(newer)), o=JSON.parse(JSON.stringify(older.logs)), n=out.logs;
+  ['sleep','sleepTs','waterTs','del','water','meals'].forEach(k=>{ if(!n[k]) n[k]={}; if(!o[k]) o[k]={}; });
+  const del=Object.assign({},o.del,n.del); n.del=del;
+  const byId=(x,y,key)=>{ const m=new Map(); x.forEach(v=>m.set(v[key],v)); y.forEach(v=>m.set(v[key],v)); return [...m.values()]; };
+  // sessions: union, and inside a session union its sets; finished wins
+  const sm=new Map(); (o.sessions||[]).forEach(s=>sm.set(s.id,s));
+  (n.sessions||[]).forEach(s=>{ const p=sm.get(s.id); if(!p){ sm.set(s.id,s); return; }
+    const sets=byId(p.sets,s.sets,'id'); sm.set(s.id,Object.assign({},p,s,{sets,endedAt:Math.max(p.endedAt||0,s.endedAt||0)||null,swaps:Object.assign({},p.swaps,s.swaps)})); });
+  n.sessions=[...sm.values()].filter(s=>!del[s.id]).map(s=>Object.assign(s,{sets:s.sets.filter(x=>!del[x.id])})).sort((p,q)=>p.startedAt-q.startedAt);
+  n.doses=byId(o.doses||[],n.doses||[],'id').filter(d=>!del[d.id]).sort((p,q)=>p.t-q.t);
+  n.checkins=byId(o.checkins||[],n.checkins||[],'id');
+  const byDayT=(x,y)=>{ const m=new Map(); x.forEach(v=>m.set(v.d,v)); y.forEach(v=>{ const p=m.get(v.d); if(!p||(v.t||0)>=(p.t||0)) m.set(v.d,v); }); return [...m.values()]; };
+  n.weights=byDayT(o.weights||[],n.weights||[]); n.waist=byDayT(o.waist||[],n.waist||[]);
+  for(const k in o.meals){ const om=o.meals[k], nm=n.meals[k]; if(!nm){ n.meals[k]=om; continue; }
+    const od=om.dts||{}, nd=nm.dts||{}; nm.dts=Object.assign({},od,nd);
+    new Set([...Object.keys(om.done||{}),...Object.keys(nm.done||{})]).forEach(i=>{ const a=od[i]||0, b2=nd[i]||0;
+      if(a>b2){ nm.done[i]=!!om.done[i]; nm.dts[i]=a; } else if(!a&&!b2&&om.done[i]) nm.done[i]=true; });
+    if((om.fts||0)>(nm.fts||0)){ nm.free=om.free; nm.fts=om.fts; }
+    const ex=new Map(); (om.extra||[]).forEach(x=>ex.set(x.id,x)); (nm.extra||[]).forEach(x=>ex.set(x.id,x)); nm.extra=[...ex.values()]; }
+  for(const k in n.meals){ n.meals[k].extra=(n.meals[k].extra||[]).filter(x=>!del[x.id]); }
+  for(const k in o.water){ if(n.water[k]==null||(o.waterTs[k]||0)>(n.waterTs[k]||0)){ n.water[k]=o.water[k]; n.waterTs[k]=o.waterTs[k]||0; } }
+  for(const k in o.sleep){ if(n.sleep[k]==null||(o.sleepTs[k]||0)>(n.sleepTs[k]||0)){ n.sleep[k]=o.sleep[k]; n.sleepTs[k]=o.sleepTs[k]||0; } }
+  out.savedAt=Math.max(a.savedAt||0,b.savedAt||0);
+  return out;
+}
+
+/* ===== ui shell ===== */
+let VIEW='today', ARG=null, HIST=[];
+const OMNI='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAB4AHgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6BApQKUUVsZhQBminUrjsJiloxVyz065uVEioEj/vucD8PX8KQFMClArWGmW8f+tuJHPoigD8zTXtbQdIpz7+YP8ACmkwuZZFJV2WG0H/AC0miP8AtoGH5ioZLd1QyIVljHV0OQPr3FKzDcr0lPxSGgBtJilooAaRRS0UDuLRQKUCncQuKUUVc0i1F3qEcTD5B8z/AO6KQFzRrGLJnukDkKHSM9OScE/l0rQnkZzljn09qRD5l7dSr0Z1RR7KMfzJq3LFEkJzgtjk07akqRlSvVOebHQ1LdOATg1m3EnWqQMjurtlB5yPQ1jzajLbT+dA5jYenSp7uTOawdScgGtIq5lLQ6mw1K21P5YlCXKxs8kY6EAgEj/vocVMcYrz7Q9TbTvFOn3hb5A7QuPUOv8AiBXpF9EsVyQn+rcB0/3TSq01Bq3UulPnvcrEUlPPNNrE0ENFHaigYDrTqQUtAhc1saCTBZXdyoBlbbFED3Y/5H5VjVv6KgOnIScYd3/HCr/U02D2LNmEto1UvkIOWbue5P1OTVLVte0uFSsmpWcZ/wBqZR/WvMvFcfifVZpLvVdWOiWm8iGxtwJJdgPBdvuhj14z9a5Wbwjpl22ZtW1h2b+J5V5/DbWijD7TM/e6I9i+2wXSeZbzxTJ/ejcMPzFVLiTrzXE/D/wnH4bu7y6ttSublLpFUxyAALtJIPHU89a6O+uSikk0nyp6D1tqN1C6t7eFpbmeKGMdWkcKPzNcjqHiXw/I5SPXNNZumBdJn+dc78T9Nt/FDWsNzezwpbMx2x4+bOPXp0riW+HnhoqQz3rH1M//ANat4ciWt7mUuZ7HpH7u6lVBINrkFXU5wc5DD6HBr1mwuTfeHLC5cBZo91vMB2Zf85HsRXzL4f0DUvC2qQzaJfzXdk8iiexuGH3SeWRugYde2a+mNJVRo0iocgmKXI7nDIT+SrSrSTSsFJNMdSdqO9Fcp07jaKU0UALRSUU9hCjmt3Tm26PkdfnH/jy1hitnSvn0x09JGH5gH+hoYHn2uyatrHiK+sdMvY9IsNKgE+r6s0Kyyx7lLiGBW+UNsG5nIOAVAGTXzP44+LWoaR4sjPhvxle6npZjSX/TCJsFhkpKGAG4dwgGM+1faV7pkElhfWzRZhv42S4A4LBk2Hn/AHePwr4/1D9mnVP+EpaGT7RNpnmf663RCZE7feYFGI68HB6ZrswsOaL5bX89NOpy4ipyNc17eSue/wDwj8QJ4v8ACcepm1+zThjHPDkkKwAOVPdSCCP/AK1W/EatFC59Aa1/hr4X/sDSGtBAkKEjai84AGAPoBgc+me9L8QLNYrOYJzx1rKtGCrNU9uhdKUpUlKasz598e+If7FszcnYZJZRFGZCQiljjcxHO1Rycc8V4/Z+PL5vFL2+paxc6jaecUVrGYwKwB+9Fj8wGBz3xXtvirwrJ4k0240wx4MygxSkZCODkZ9jyDj1rhvBXwNu9P19b3VbaYiAloQQnlBuzFgcvjsMDPfFejQoR916Wv71308jjq12lJWd+ll1OxtU1PSNXtbG7vW1Oxv4jLY3rIFkGAGMb44J2nIPHQg1794Tm87wxG/U+TGD/wB9tXlmo2wWO3t1QLFbqFjHU8LtBz9P516h4RjMXhWJCMHKL+jN/wCzCvPrJLY7KTuy8RzSU40mK5jpEopSKKQXExSgUoFLVEiAVp6PvaG7hjYCTYJEz0JU9D7EHFZwq1ps4t72N2+4flf6Hg0BvoaNhqEUsLBgwAJVlPVGHUGop5rdW+Q5+orH1IvY65t6JcKUP++oyp/Fdw/AViPf6jLrS28FrJJCPvso6D+tNrsKLfU7y1mjMB6A56+1cb8RtVsorRofOVnYYAFayyiW1ZI5ecYODyD/AErzvxVo1wJmmE+8f7RohuE1oQ+GbqIO8cgBIPU1t3upWkMX3UJrgJLgaeGaWVUJ4BJx+XrTba7uLqKRpUdFH3d3Uj1x2reTu7mMdFYv6vqiS3C5QtlwscadXY9AP88cmvWtOt5LTQdPgmZTO6GeYr93c2AAPYAAD6V4/wCEdPk1fxbFCFysOEB9Gblj+C7R+Jr2u7ZXnbZ9xQET6AYFTWloolUou7ZXxSYp5FJisDcbiin44opAJil6UYpQveqJAClApRRjJpDItZWW60/93zcw4eInuV5H+H0NVtNkiYJcRfdkUMM9QD2rQANUzYvAJriIjyWfds/useTj2PX2JNVf3bE9bi6qbeWI/aLeOb3OQ3/fQwa4DxDFp7O220vAemBePt/LNdheXK7CCa5TW7iPJ5GaIhI49rO2ilLpAqt/eYlmH4sSaHdUhdznYgLHHcCrMwaWQ7Rx1NdT4E8O2uoFNRnlSa3gkB8sch3HIye4HXHc4rbm7mVrvQ1/hnokml6V9uu023tyCxH93dyf8PoK6ojFSYpMVg3d3ZsopKxHijFPIpCKRQwg0U7pRSAKXk0oFSwQTTf6qJn9wOPzpiIgKWrDWciSRpK8UZkcIuWzyfpVxLW1iHzAzN6twPyoEZ8MMkzbY0LH27VpS20cVgIMhmJ3Oe2akEmQEUBV/ugYFOYeYuAeaQziNb0zeHEZ2mvNfEa6hZzFVELDPVo8n+dey60vk3S7h8rjBrifFmniYHC5NXEmWx5bdT3U2EklJyeVAwPyFenfDjVLSw0YW1w4RXkzu9DXLanoLWdssrr87c9OlUIvPACKGxXSoKaOdz5We5oVkQOjK6kZDA5BpcV5hoN/qViP3E0ir3U8g/hXX6b4kEgC3sG0/wB+P/CsZUmtjaNWL3OgxSYqKG8s5iVju4WIO0jdgg+lTkHGe3qORWWqNdGNxRS4oouFkadjpyJGJ7wZJGVi/q3+FTzzttwMKo6KBgCiihCMG8lNx4i0+1BP7kPdP9FG1f8Ax5/0raUZHNFFaVNo+n+ZlTd3L1/RDHGOlQySsOlFFZmhl6vN5sZDk5HQmq+lW6XrBpVB2eo60UVXQXUbq+jRXLkz4x2FY8mi2MR+WLOKKKqEmTKKIZbeNFISBRVRYjvOV+lFFaxZnJFXRkMOr6raOSSzpdJn+667Tj6Mh/Otu3vLmzbdDIQO47GiitKusl6L8iKe3zZu6VqkGoHyxiO4A+52b6UUUVyTST0OmEm1qf/Z';
+function layer(){ const l=$('layer'); if(!$('lw-sheet')) l.innerHTML='<div id="lw-sheet"></div><div id="lw-rest"></div><div id="lw-snack"></div><div id="lw-toast"></div>'; }
+function toast(title,sub,icon){ layer(); const el=$('lw-toast'); const ic=icon==='omni'?`<div class="tro" style="background:none"><img src="${OMNI}" alt=""></div>`:`<div class="tro">${I(icon||'check')}</div>`;
+  el.innerHTML=`<div class="toast glass" onclick="this.parentNode.innerHTML=''">${ic}<div>${sub?`<small>${esc(sub)}</small>`:''}<b>${esc(title)}</b></div></div>`; clearTimeout(toast.h); toast.h=setTimeout(()=>el.innerHTML='',4200); }
+let UNDO=null;
+function snack(t,undo){ layer(); const el=$('lw-snack'); UNDO=undo||null; el.innerHTML=`<div class="snack glass" style="bottom:${VIEW==='session'?106:100}px">${esc(t)}${undo?'<button onclick="doUndo()">Undo</button>':''}</div>`; clearTimeout(snack.h); snack.h=setTimeout(()=>{el.innerHTML='';UNDO=null;},4000); }
+function doUndo(){ if(UNDO)UNDO(); UNDO=null; $('lw-snack').innerHTML=''; save(); render(); }
+function openSheet(html,cls){ layer(); $('lw-snack').innerHTML=''; $('lw-sheet').innerHTML=`<div class="dim" onclick="closeSheet()"></div><div class="sheet glass ${cls||''}"><div class="grabber"></div><div class="in">${html}</div></div>`; }
+function closeSheet(){ if($('lw-sheet')) $('lw-sheet').innerHTML=''; }
+function shTop(t,sub){ return `<div class="sh-top"><div><h2>${t}</h2>${sub?`<div class="sub" style="margin-top:4px">${sub}</div>`:''}</div><button class="xbtn" onclick="closeSheet()">${I('x','s')}</button></div>`; }
+function go(v,a,noHist){ if(!noHist&&VIEW!==v) HIST.push([VIEW,ARG]); VIEW=v; ARG=a===undefined?null:a; closeSheet(); if($('lw-snack')) $('lw-snack').innerHTML=''; render(); $('scroll').scrollTop=0; }
+function back(){ const h=HIST.pop(); if(h){ VIEW=h[0]; ARG=h[1]; } else { VIEW='today'; ARG=null; } render(); $('scroll').scrollTop=0; }
+function lt(eyebrow,title,right){ return `<div class="lt"><div class="lt-row"><div>${eyebrow?`<div class="eyebrow">${eyebrow}</div>`:''}<h1>${title}</h1></div>${right||''}</div></div>`; }
+function backBar(label,right){ return `<div class="row between" style="padding:6px 0 4px"><button class="gbtn glass" onclick="back()">${I('back')}</button>${right||''}</div>`; }
+function meBtn(){ return `<div class="me" onclick="go('me')">${esc((S.profile.name||'J')[0])}</div>`; }
+function omniLine(html){ return `<div class="card omni"><img src="${OMNI}" alt=""><p>${html}</p></div>`; }
+
+function renderTabs(){
+  const tb=$('tabbar'); if(VIEW==='session'||VIEW==='auth'){ tb.style.display='none'; return; } tb.style.display='';
+  const on=v=>VIEW===v||(v==='today'&&['me','stack','item','health'].includes(VIEW))||(v==='progress'&&['lift','body'].includes(VIEW))||(v==='train'&&['preview','summary'].includes(VIEW));
+  const t=(v,ic,l)=>`<div class="tab ${on(v)?'on':''}" onclick="HIST=[];go('${v}')">${I(ic)}<span>${l}</span></div>`;
+  tb.innerHTML=t('today','today','Today')+t('train','train','Train')+`<div class="mic" onclick="quickLog()">${I('plus')}</div>`+t('food','fork','Food')+t('progress','progress','Progress');
+}
+const VIEWS={};
+function render(){ if(!S){ return; } const f=VIEWS[VIEW]||VIEWS.today; $('scroll').innerHTML=f(ARG); renderTabs(); drawRest(); }
+
+/* ===== quick log (+) ===== */
+function quickLog(){
+  const k=today(), wt=weightOn(k);
+  const row=(ic,n,d,fn)=>`<div class="li" onclick="${fn}"><div class="ic">${I(ic)}</div><div><div class="n">${n}</div><div class="d">${d}</div></div>${I('chev','chev')}</div>`;
+  openSheet(shTop('Log')+`<div class="list" style="background:rgba(255,255,255,.85)">
+    ${row('scale','Morning weight',wt?wt+' lb today':'Not logged today',"weightSheet()")}
+    ${row('fork','Meal',mealsDoneCount(k)+' of '+P.food.meals.length+' planned meals done',"closeSheet();go('food')")}
+    ${row('drop','Water',(L().water[k]||0)+' of '+P.water.bottles+' bottles',"addWater(1);closeSheet()")}
+    ${row('syringe','Dose',stackLine(k).short,"closeSheet();go('stack')")}
+    ${row('moon','Sleep',L().sleep[k]!=null?L().sleep[k]+' h last night':'Not logged',"sleepSheet()")}
+    ${row('ruler','Waist',(L().waist.length?L().waist[L().waist.length-1].in+' in, '+niceDate(L().waist[L().waist.length-1].d):'Not logged yet'),"waistSheet()")}
+  </div>`);
+}
+
+/* ===== weight / sleep / waist / water ===== */
+let WV=null;
+function weightSheet(){
+  const k=today(), ws=weights(); WV=weightOn(k)||(ws.length?ws[ws.length-1].lb:273);
+  openSheet(shTop('Morning weight','After the bathroom, before food or water.')+`<div id="wsx"></div>
+  <button class="btn black" style="margin-top:14px" onclick="saveWeight()">Save</button>`);
+  drawW();
+}
+function drawW(){ $('wsx').innerHTML=`<div class="stepbig"><button onclick="WV=r1(WV-0.2);drawW()">${I('minus')}</button>
+  <div class="v"><input id="wv" inputmode="decimal" value="${WV.toFixed(1)}" onchange="WV=r1(parseFloat(this.value)||WV)" style="width:150px;border:0;background:transparent;text-align:center;font:700 44px/1 var(--display);letter-spacing:-.03em;outline:none"><small>lb</small></div>
+  <button onclick="WV=r1(WV+0.2);drawW()">${I('plus')}</button></div>`; }
+function saveWeight(){ const v=parseFloat($('wv').value); if(!(v>80&&v<600)){ toast('Check that number','Weight'); return; }
+  const k=today(), xs=L().weights, i=xs.findIndex(w=>w.d===k); if(i>=0) xs[i].lb=r1(v); else xs.push({d:k,lb:r1(v),t:Date.now()});
+  save(); closeSheet(); render(); const tr=trend(); toast(r1(v)+' lb logged. Trend '+tr[tr.length-1].t+' lb','Weight'); }
+function sleepSheet(){ const k=today(), cur=L().sleep[k];
+  openSheet(shTop('Sleep last night')+`<div class="chips" style="flex-wrap:wrap;margin:0">${[5,5.5,6,6.5,7,7.5,8,8.5,9].map(h=>`<span class="pill ${cur===h?'on':''}" onclick="L().sleep['${k}']=${h};L().sleepTs['${k}']=Date.now();save();closeSheet();render();snack('Sleep ${h} h logged')">${h} h</span>`).join('')}</div><div class="fine" style="margin-top:14px;text-align:left">Aim for 7.5 to 8 hours. Under 6 hours for 3 nights in a week means an easier training week.</div>`); }
+function waistSheet(){ const xs=L().waist, last=xs.length?xs[xs.length-1].in:46; WV=last;
+  openSheet(shTop('Waist','At the belly button, morning, relaxed, after breathing out.')+`<div id="wsx"></div><button class="btn black" style="margin-top:14px" onclick="saveWaist()">Save</button>`);
+  $('wsx').innerHTML=`<div class="stepbig"><button onclick="WV=r1(WV-0.25);waistDraw()">${I('minus')}</button><div class="v" id="wvv"></div><button onclick="WV=r1(WV+0.25);waistDraw()">${I('plus')}</button></div>`; waistDraw(); }
+function waistDraw(){ $('wvv').innerHTML=(Math.round(WV*100)/100)+'<small>in</small>'; }
+function saveWaist(){ const k=today(), xs=L().waist, i=xs.findIndex(w=>w.d===k); if(i>=0) xs[i].in=WV; else xs.push({d:k,in:WV}); save(); closeSheet(); render(); snack('Waist '+WV+' in logged'); }
+function addWater(n){ const k=today(); const prev=L().water[k]||0; L().water[k]=Math.max(0,Math.min(12,prev+n)); L().waterTs[k]=Date.now(); save(); render(); if(n>0) snack('Water '+L().water[k]+' of '+P.water.bottles+' bottles',()=>{L().water[k]=prev;L().waterTs[k]=Date.now();}); }
+function setWater(n){ const k=today(); const prev=L().water[k]||0; L().water[k]=(prev===n?n-1:n); L().waterTs[k]=Date.now(); save(); render(); }
+
+/* ===== stack summary helpers ===== */
+function stackDue(k){ return stackItems().filter(it=>dueOn(it,k)); }
+function stackLine(k){
+  const due=stackDue(k), done=due.filter(it=>dosesOn(it,k).length);
+  if(!due.length) return {short:'Nothing due today',long:'Nothing scheduled today.'};
+  const left=due.filter(it=>!dosesOn(it,k).length).map(it=>it.name.replace(/ \(.*\)/,''));
+  return {short:done.length+' of '+due.length+' taken today',long:left.length?('Left today: '+left.join(', ')+'.'):'All done for today.'};
+}
+
+/* ===== TODAY ===== */
+VIEWS.today=function(){
+  const k=today(), w=weekOf(k), d=pkey(k), ph=phaseOf(w);
+  const ebrow=DAYL[d.getDay()]+', '+MON[d.getMonth()]+' '+d.getDate();
+  let h=lt(ebrow,w<1?'Hi '+esc(S.profile.name):w>P.weeks?'Program complete':'Week '+w+' of '+P.weeks,meBtn());
+  if(w>P.weeks){ h+=omniLine(`<b>All ${P.weeks} weeks done.</b> Siddharth will send your next plan. Keep logging food and weight until then.`); }
+  if(w<1){ h+=omniLine(`<b>Your program starts ${niceDate(P.start,true)}.</b> Food starts today: tick off your meals as you eat them and log your weight each morning.`); }
+  else if(ph) h+=`<div class="row" style="gap:8px;margin:-4px 4px 12px;flex-wrap:wrap"><span class="tag ${isDeload(w)?'dark':'soft'}">${esc(ph.name)}</span><span class="sub">${esc(ph.note)}</span></div>`;
+  // morning check-in strip
+  if(weightOn(k)==null) h+=`<div class="card row" style="gap:12px;padding:12px 14px"><div class="ic soft">${I('sun')}</div><div style="flex:1"><div class="mname">Morning weigh-in</div><div class="sub" style="margin-top:3px">Before food or water</div></div><button class="btn black sm" onclick="weightSheet()">Log</button></div>`;
+  // food
+  const t=foodTargets(k), e=eaten(k), kl=t.kcal-e.kcal, pl=t.p-e.p, dd=foodDay(k);
+  const nextI=P.food.meals.findIndex((m,i)=>!dd.done[i]);
+  let line;
+  if(nextI<0) line=pl>10?`<b>All meals done, ${pl} g protein short.</b> Add a scoop of whey.`:t.brk?`<b>Every meal done.</b> Diet break week: eat ${fmtN(Math.max(0,kl))} more kcal, mostly carbs like rice, potatoes or cream of rice.`:kl<-150?`<b>${fmtN(-kl)} kcal over today.</b> Fine once a week. Back on plan tomorrow.`:'<b>Every meal done today.</b> That is how the weight comes off.';
+  else line=`<b>Next: ${esc(P.food.meals[nextI].name)}</b>, ${esc(P.food.meals[nextI].time)}. ${P.food.meals[nextI].kcal} kcal, ${P.food.meals[nextI].p} g protein.`;
+  h+=`<div class="card tap" onclick="go('food')"><div class="cap">${I('fork')} Food<span class="r">${mealsDoneCount(k)} of ${P.food.meals.length} meals ${I('chev','xs')}</span></div>
+   <p style="font:400 15px/1.35 var(--text);margin-top:12px">${line}</p>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px">
+    <div><div class="big" style="font-size:34px">${fmtN(Math.abs(kl))}</div><div class="sub" style="margin-top:4px">${kl<0?'kcal over':'kcal left'}</div><div class="bar" style="margin-top:9px"><i style="width:${Math.min(100,e.kcal/t.kcal*100)}%;background:#8E8E93"></i></div></div>
+    <div><div class="big" style="font-size:34px">${Math.max(0,pl)}<span class="unit">g</span></div><div class="sub" style="margin-top:4px">protein to go</div><div class="bar" style="margin-top:9px"><i style="width:${Math.min(100,e.p/t.p*100)}%"></i></div></div></div>
+   ${nextI>=0?`<div style="margin-top:14px" onclick="event.stopPropagation()"><span class="pill" onclick="tickMeal(${nextI})">${I('check','s')} Ate ${esc(P.food.meals[nextI].name)} as planned</span></div>`:''}
+   ${t.brk?'<div class="sub" style="margin-top:10px">Diet break week: maintenance calories.</div>':''}</div>`;
+  // workout
+  const ss=sessionFor(k), doneS=L().sessions.find(s=>s.date===k&&s.name===(ss&&ss.name));
+  if(ss&&w>=1&&w<=P.weeks){ const exs=exList(ss.name), main=exs[0], tg=targetFor(main,ss.name,k);
+    h+=`<div class="card"><div class="cap">${I('train')} Workout<span class="r">Today</span></div>
+     <div class="h3" style="margin-top:12px">${esc(ss.name)}</div><div class="sub" style="margin-top:4px">${esc(ss.focus)}</div>
+     <div style="font:600 16px/1.3 var(--text);margin-top:12px">${esc(main.name)}: ${doneS&&doneS.endedAt&&workSets(doneS,main).length?workSets(doneS,main).map(x=>x.w+'×'+x.r).join(', '):(tg.w?tg.w+' lb × ':'')+tg.lo+' to '+tg.hi+' reps'+(tg.w?'':', your weight')}</div>
+     <div class="sub" style="margin-top:3px">+${exs.length-1} more: ${exs.slice(1,3).map(x=>esc(x.name)).join(', ')}${exs.length>3?'…':''}</div>
+     ${doneS&&doneS.endedAt?`<button class="btn grey" style="margin-top:14px" onclick="go('summary','${doneS.id}')">${I('check','s')} Done. See how it went</button>`:
+       `<button class="btn black" style="margin-top:14px" onclick="startSession('${esc(ss.name)}')">${doneS?'Resume':'Start'} ${esc(ss.name)}</button>`}</div>`;
+  } else if(w>P.weeks){ } else if(w>=1){ h+=`<div class="card"><div class="cap">${I('train')} Workout<span class="r">Today</span></div><div class="h3" style="margin-top:12px">Rest day</div><div class="sub" style="margin-top:4px">Easy walk only. Meal prep and your weekly check-in.</div></div>`; }
+  else { const first=P.schedule.find(s=>s.day==='Mon'); h+=`<div class="card tap" onclick="go('preview','${esc(first.name)}')"><div class="cap">${I('train')} First workout<span class="r">${niceDate(P.start,true)} ${I('chev','xs')}</span></div><div class="h3" style="margin-top:12px">${esc(first.name)}</div><div class="sub" style="margin-top:4px">Tap to preview every exercise, set and rep range.</div></div>`; }
+  // check-in on Sunday
+  if(dow(k)===0&&w>=1&&!L().checkins.find(c=>c.d===k)) h+=`<div class="card row" style="gap:12px;padding:14px"><div class="ic">${I('flag')}</div><div style="flex:1"><div class="mname">Weekly check-in</div><div class="sub" style="margin-top:3px">2 minutes. Goes straight to Siddharth.</div></div><button class="btn black sm" onclick="checkinSheet()">Start</button></div>`;
+  // stack
+  const due=stackDue(k), sl=stackLine(k);
+  h+=`<div class="card"><div class="cap">${I('pill')} Stack<span class="r" style="cursor:pointer" onclick="go('stack')">${sl.short} ${I('chev','xs')}</span></div>
+   <p class="sub" style="margin-top:10px;font-size:14px;color:#000">${due.length?esc(sl.long):'Nothing scheduled today. Tap Stack to log anything as needed.'}</p>
+   ${due.length?`<div class="chips" style="flex-wrap:wrap;margin:12px 0 0;padding:0;overflow:visible">${due.map(it=>{ const dn=dosesOn(it,k).length; return `<span class="pill ${dn?'on':''}" onclick="${dn?`go('item','${it.id}')`:(it.route==='inj'?`doseSheet('${it.id}')`:`takeQuick('${it.id}')`)}">${dn?I('check','xs'):(it.route==='inj'?I('syringe','xs'):'')} ${esc(it.name.replace(/ \(.*\)/,''))}</span>`; }).join('')}</div>`:''}</div>`;
+  // water
+  const wn=L().water[k]||0;
+  h+=`<div class="card row" style="gap:12px;padding:14px"><div style="display:flex;align-items:center;gap:8px">${I('drop')}<span class="mname">Water</span><span class="sub" style="font-size:14px">${wn} of ${P.water.bottles}</span></div>
+   <div style="margin-left:auto;display:flex;gap:0">${Array.from({length:P.water.bottles},(_,i)=>`<span onclick="setWater(${i+1})" style="padding:8px 3px;cursor:pointer;display:inline-flex"><i style="width:13px;height:13px;border-radius:50%;background:${i<wn?'#000':'var(--track)'}"></i></span>`).join('')}</div>
+   <button class="xbtn" style="background:#000;color:#fff" onclick="addWater(1)">${I('plus','s')}</button></div>
+   <div class="fine" style="margin:-6px 0 12px;text-align:left;padding-left:6px">${P.water.bottle} oz bottles. ${P.water.oz} oz a day, more on hot shifts.</div>`;
+  // progress snapshot
+  h+=snapshotCard();
+  return h;
+};
+function snapshotCard(){
+  const tr=trend(), last=tr.length?tr[tr.length-1]:null, wk=tr.length>7?tr[tr.length-8]:null;
+  const mx=(S.profile.maxes||{}), lifts=[['Squat','Back squat'],['Incline','Low-incline bench'],['Deadlift','Deadlift']].map(([l,n])=>({l,n,b:Math.max(bestE1(n),mx[n]||0)}));
+  return `<div class="card tap" onclick="go('progress')"><div class="cap">${I('progress')} Progress<span class="r">${I('chev','xs')}</span></div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+    <div><div class="sub">Trend weight</div><div class="big" style="font-size:32px;margin-top:6px">${last?last.t:'--'}<span class="unit">lb</span></div>
+     <div class="sub" style="margin-top:4px">${(()=>{ const a=weekAvg(today()), b=weekAvg(addDays(today(),-7)); return a!=null&&b!=null?(a-b<=0?'':'+')+r1(a-b)+' lb vs last week':'Log every morning'; })()}</div>${spark(tr.slice(-28).map(x=>x.t))}</div>
+    <div><div class="sub">Max (est.)</div>${lifts.map(l=>`<div class="row between" style="margin-top:9px"><span style="font:500 14px/1 var(--text)">${l.l}</span><b class="num" style="font:600 15px/1 var(--text)">${l.b?fmtN(l.b)+' lb':'--'}</b></div>`).join('')}</div></div></div>`;
+}
+function spark(v){ if(v.length<2) return ''; const mn=Math.min(...v), mx=Math.max(...v), W=140,H=26;
+  const pts=v.map((y,i)=>(i/(v.length-1)*W).toFixed(1)+','+(H-(mx===mn?H/2:(y-mn)/(mx-mn)*H)).toFixed(1)).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H+2}" style="width:100%;height:28px;margin-top:8px;overflow:visible"><polyline points="${pts}" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
+
+/* ===== FOOD ===== */
+function tickMeal(i,k){ k=k||today(); const d=foodDay(k); const was=!!d.done[i]; d.done[i]=!was; mts(d,i); save(); render();
+  if(!was){ const e=eaten(k), t=foodTargets(k); snack(P.food.meals[i].name+' done. '+Math.max(0,t.p-e.p)+' g protein to go',()=>{d.done[i]=false;mts(d,i);}); } }
+function allMeals(){ const k=today(), d=foodDay(k); const prev=JSON.stringify(d.done); P.food.meals.forEach((m,i)=>{ d.done[i]=true; mts(d,i); }); save(); render(); snack('Whole day logged as planned',()=>{d.done=JSON.parse(prev);P.food.meals.forEach((m,i)=>mts(d,i));}); }
+VIEWS.food=function(){
+  const k=today(), t=foodTargets(k), e=eaten(k), d=foodDay(k);
+  const bar=(n,v,tt,u,grey)=>`<div><div class="mrow"><span class="mname">${n}</span><span class="mval">${fmtN(v)}<span> / ${fmtN(tt)}${u}</span></span></div><div class="bar ${grey?'grey':''}" style="margin-top:8px"><i style="width:${Math.min(100,v/tt*100)}%"></i></div></div>`;
+  let h=lt(niceDate(k,true),'Food',meBtn());
+  h+=`<div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 18px">${bar('Calories',e.kcal,t.kcal,'',true)}${bar('Protein',e.p,t.p,' g')}${bar('Carbs',e.c,t.c,' g',true)}${bar('Fat',e.f,t.f,' g',true)}</div>
+   ${t.brk?'<div class="sub" style="margin-top:12px">Diet break week: +150 g carbs and +10 g fat a day, already in your numbers.</div>':''}
+   ${S.adj&&S.adj.c?`<div class="sub" style="margin-top:12px">Carbs adjusted by ${S.adj.c>0?'+':''}${S.adj.c} g a day by Siddharth.</div>`:''}</div>`;
+  if(mealsDoneCount(k)<P.food.meals.length) h+=`<button class="btn grey" style="margin-bottom:12px" onclick="allMeals()">${I('check','s')} I ate everything as planned today</button>`;
+  P.food.meals.forEach((m,i)=>{ const on=!!d.done[i], free=d.free&&i===P.food.freeMeal.replaces;
+    h+=`<div class="card" style="padding:14px 16px">
+     <div class="row" style="gap:12px;cursor:pointer" onclick="tickMeal(${i})"><button class="done ${on?'on':''}" style="width:34px;height:34px">${I('check')}</button>
+      <div style="flex:1"><div class="mname" style="font-size:16px">${esc(m.name)}${free?' (free meal)':''}</div><div class="sub" style="margin-top:3px">${esc(m.time)}</div></div>
+      <div style="text-align:right"><div class="mval">${free?'~'+fmtN(P.food.freeMeal.kcal):m.kcal}<span> kcal</span></div><div class="sub" style="margin-top:3px">${free?'':m.p+' g protein'}</div></div></div>
+     ${free?`<div class="note callout" style="margin:10px 0 0">${esc(P.food.freeMeal.note)}</div>`:`<div style="margin-top:8px">${m.items.map(it=>`<div class="fitem"><b>${esc(it.food)}</b><span>${esc(it.amt)}</span></div>`).join('')}</div>`}</div>`; });
+  // free meal toggle on Saturday (or any day once a week)
+  const wkStart=addDays(k,-((dow(k)+6)%7)), usedThisWeek=Object.keys(L().meals).some(x=>x>=wkStart&&x<=addDays(wkStart,6)&&x!==k&&L().meals[x].free);
+  h+=`<div class="list"><div class="li" onclick="${usedThisWeek&&!d.free?"toast('Already used this week','Free meal')":'toggleFree()'}"><div class="ic soft">${I('bolt')}</div><div><div class="n">Free meal</div><div class="d">${d.free?'On today. Replaces dinner.':usedThisWeek?'Used this week already':'One a week. Best on Saturday after Legs B.'}</div></div><div class="sw ${d.free?'on':''}" style="margin-left:auto"></div></div>
+   <div class="li" onclick="extraSheet()"><div class="ic soft">${I('plus')}</div><div><div class="n">Ate something else</div><div class="d">${d.extra.length?d.extra.map(x=>esc(x.name)).join(', '):'Add calories and protein'}</div></div>${I('chev','chev')}</div>
+   <div class="li" onclick="swapSheet()"><div class="ic soft">${I('repeat')}</div><div><div class="n">Swaps</div><div class="d">Same macros, different food</div></div>${I('chev','chev')}</div></div>`;
+  h+=`<div class="fine">Times assume a 7 to 5 shift with training after work. Slide them to fit your day.</div>`;
+  return h;
+};
+function toggleFree(){ const d=foodDay(); d.free=!d.free; d.fts=Date.now(); if(d.free){ d.done[P.food.freeMeal.replaces]=true; mts(d,P.food.freeMeal.replaces); } save(); render(); }
+function extraSheet(){ openSheet(shTop('Ate something else')+`<div class="field"><div class="fr"><label>What</label><input class="l" id="xn" placeholder="e.g. Protein bar" style="width:170px;text-align:right"></div>
+  <div class="fr"><label>Calories</label><input id="xk" inputmode="numeric" placeholder="0"></div><div class="fr"><label>Protein</label><input id="xp" inputmode="numeric" placeholder="0 g"></div></div>
+  <button class="btn black" style="margin-top:14px" onclick="saveExtra()">Add</button>
+  ${foodDay().extra.length?`<div class="flabel">Today</div><div class="field">${foodDay().extra.map(x=>`<div class="fr"><label>${esc(x.name)}</label><span class="u">${x.kcal} kcal, ${x.p} g <button class="xbtn" style="margin-left:8px;width:30px;height:30px;display:inline-grid;vertical-align:middle" onclick="rmExtra('${x.id}')">${I('x','xs')}</button></span></div>`).join('')}</div>`:''}`); }
+function saveExtra(){ const n=$('xn').value.trim()||'Extra', kc=parseInt($('xk').value)||0, p=parseInt($('xp').value)||0; if(!kc&&!p){ toast('Add calories or protein'); return; }
+  foodDay().extra.push({id:uid(),name:n,kcal:kc,p:p}); save(); closeSheet(); render(); snack(n+' added'); }
+function rmExtra(id){ const d=foodDay(); d.extra=d.extra.filter(x=>x.id!==id); tomb(id); save(); extraSheet(); render(); }
+function swapSheet(){ openSheet(shTop('Swaps','Roughly the same macros.')+`<div class="field">${P.food.swaps.map(s=>`<div style="padding:12px 0;border-top:.5px solid var(--sep)"><div style="font:600 15px/1.3 var(--text)">${esc(s[0])}</div><div class="sub" style="margin-top:3px">${esc(s[1])}</div></div>`).join('').replace('border-top:.5px solid var(--sep)','border-top:0')}</div>`); }
+
+/* ===== TRAIN ===== */
+VIEWS.train=function(){
+  const k=today(), w=Math.max(1,weekOf(k)), ph=phaseOf(w);
+  const wkStart=weekOf(k)<1?P.start:addDays(k,-((dow(k)+6)%7));
+  let h=lt(weekOf(k)>P.weeks?'Program complete':'Week '+w+' of '+P.weeks+(ph?' · '+ph.name:''),'Train',meBtn());
+  if(weekOf(k)>P.weeks) h+=omniLine(`<b>All ${P.weeks} weeks done.</b> Siddharth will send your next block. You can still open and log any session below.`);
+  if(ph) h+=`<div class="card" style="padding:14px 16px"><div class="row between"><span class="tag ${isDeload(w)?'dark':'soft'}">${esc(ph.name)}</span><span class="sub">Effort: ${isDeload(w)?'3 to 4':'about '+({1:'3',2:'2',3:'1 to 2',4:'0 to 1'}[blockPos(w)]||'2')} reps left</span></div><div class="sub" style="margin-top:10px;color:#000;font-size:14px">${esc(ph.note)}</div>
+   <div class="segs" style="margin:12px 0 0">${Array.from({length:P.weeks},(_,i)=>`<i class="${i<w?'on':''}" style="${P.deloads.includes(i+1)?'opacity:.45':''}"></i>`).join('')}</div></div>`;
+  h+=`<div class="section-h"><h3>This week</h3><span>${niceDate(wkStart)} to ${niceDate(addDays(wkStart,6))}</span></div><div class="list">`;
+  for(let i=0;i<7;i++){ const dk=addDays(wkStart,i), s=sessionFor(dk), sc=P.schedule.find(x=>x.day===DAYS[dow(dk)]);
+    const done=s&&L().sessions.find(x=>x.date===dk&&x.name===s.name&&x.endedAt), isT=dk===k;
+    h+=`<div class="li" onclick="${s?`go('preview','${esc(s.name)}')`:''}"><div class="ic ${done?'':'soft'}" style="${isT&&!done?'box-shadow:inset 0 0 0 2px #000':''}">${done?I('check'):'<span style="font:600 12px/1 var(--text)">'+DAYS[dow(dk)]+'</span>'}</div>
+     <div><div class="n">${esc(sc.name)}${isT?' <span class="tag dark" style="margin-left:6px;height:20px">Today</span>':''}</div><div class="d">${esc(s?s.focus.replace(/(Off work|Work day)[.,]?\s*/g,'').split('.')[0]:'Easy walk, check-in, meal prep')}</div></div>${s?I('chev','chev'):''}</div>`; }
+  h+=`</div><div class="section-h"><h3>How you progress</h3></div><div class="card"><div class="wkrow"><div class="ic">${I('up')}</div><p>Hit the top of the rep range on <b>every set</b>, then add weight: <b>+5 lb</b> upper body and dumbbells, <b>+10 lb</b> on squats, deadlifts, leg press and hack squat.</p></div>
+   <div class="wkrow"><div class="ic">${I('flat')}</div><p>Fall short? <b>Keep the weight</b> and beat your reps. Under the range two sessions running, drop about 7%.</p></div>
+   <div class="wkrow"><div class="ic">${I('moon')}</div><p><b>Deload every 5th week:</b> half the sets, easy reps. Early deload if reps drop 2 sessions in a row, the knee acts up, or you sleep under 6 hours 3 nights.</p></div>
+   <div class="wkrow"><div class="ic">${I('body')}</div><p>Squats, RDLs and deadlifts always stop <b>2 reps short</b>. Knee sleeves on every leg exercise.</p></div></div>`;
+  h+=`<div class="fine">The app works out every weight for you from last time. Just log what you did.</div>`;
+  return h;
+};
+VIEWS.preview=function(name){
+  const k=today(), exs=exList(name), sc=P.schedule.find(s=>s.name===name), w=Math.max(1,weekOf(k));
+  let h=backBar()+lt(sc?DAYL[DAYS.indexOf(sc.day)]+'s':'',esc(name));
+  h+=`<div class="sub" style="margin:-6px 4px 14px;font-size:15px">${esc(sc?sc.focus:'')}</div>`;
+  h+=`<div class="list">${exs.map((ex,i)=>{ const tg=targetFor(ex,name,k), [lo,hi]=[tg.lo,tg.hi];
+    return `<div class="li" style="cursor:default;align-items:flex-start"><div class="ic soft" style="font:600 13px/1 var(--text)">${i+1}</div><div style="flex:1;min-width:0"><div class="n">${esc(ex.name)}</div>
+     <div class="d">${ex.scheme?(setsFor(ex,w)-1)+' build-up sets + top set of '+lo+' to '+hi:setsFor(ex,w)+' sets × '+lo+' to '+hi} · ${tg.w?tg.w+' lb':'your weight'} · rest ${mmss(ex.rest)}</div><div class="d" style="color:#000;opacity:.75">${esc(ex.cue)}</div></div></div>`; }).join('')}</div>`;
+  const live=L().sessions.find(s=>!s.endedAt&&s.name===name);
+  h+=`<button class="btn black" onclick="startSession('${esc(name)}')">${live?'Resume':'Start'} ${esc(name)}</button>`;
+  if(weekOf(k)<1) h+=`<div class="fine" style="margin-top:10px">Program starts ${niceDate(P.start,true)}, but you can start any session early.</div>`;
+  return h;
+};
+
+/* ===== SESSION ===== */
+let CUR=null, DRAFT={}, REST=null, WAKE=null;
+function startSession(name){
+  closeStale(); const k=today(); let s=L().sessions.find(x=>!x.endedAt&&x.name===name&&x.date===k);
+  if(!s){ s={id:uid(),date:k,name:name,week:Math.max(1,weekOf(k)),startedAt:NOWT(),endedAt:null,sets:[],swaps:{},note:''}; L().sessions.push(s); save(); }
+  CUR=s.id; DRAFT={}; keepAwake(); go('session',s.id);
+}
+function curSess(){ return L().sessions.find(s=>s.id===(ARG||CUR)); }
+function sessEx(s){ return exList(s.name).map(ex=>s.swaps&&s.swaps[ex.id]?Object.assign({},ex,{name:s.swaps[ex.id],swapped:ex.name,start:null}):ex); }
+async function keepAwake(){ try{ if('wakeLock' in navigator){ WAKE=await navigator.wakeLock.request('screen'); } }catch(e){} }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&VIEW==='session') keepAwake(); });
+function draftFor(s,ex,i,tg){
+  const key=ex.id+'#'+i; if(DRAFT[key]) return DRAFT[key];
+  const logged=s.sets.find(x=>x.ex===ex.id&&!x.warm&&x.n===i);
+  if(logged) return DRAFT[key]={w:logged.w,r:logged.r};
+  const prevSet=prevSetFor(ex,tg,i,s.week), st=setTarget(ex,tg,i,s.week);
+  let w=st.w; const earlier=s.sets.filter(x=>x.ex===ex.id&&!x.warm);
+  // straight sets: carry today's weight forward. Build-up sets: start from the last one and add
+  if(earlier.length&&!ex.scheme) w=earlier[earlier.length-1].w;
+  if(ex.scheme&&w==null&&earlier.length) w=earlier[earlier.length-1].w;
+  return DRAFT[key]={w:w,r:prevSet&&w!=null&&w===prevSet.w?Math.min(st.hi,prevSet.r+1):st.hi};
+}
+VIEWS.session=function(id){
+  const s=curSess(); if(!s) return VIEWS.today();
+  const exs=sessEx(s), k=s.date, w=s.week;
+  const doneCount=ex=>s.sets.filter(x=>x.ex===ex.id&&!x.warm).length;
+  const total=exs.reduce((a,ex)=>a+setsFor(ex,w),0), dn=s.sets.filter(x=>!x.warm).length;
+  const curIdx=exs.findIndex(ex=>doneCount(ex)<setsFor(ex,w));
+  let h=`<div class="row between" style="padding:6px 0 10px"><button class="gbtn glass" onclick="leaveSession()">${I('back')}</button>
+   <div style="text-align:center"><div style="font:700 17px/1 var(--display)">${esc(s.name)}</div><div class="sub" style="margin-top:4px">${dn} of ${total} sets · <span id="stime">${mmss((NOWT()-s.startedAt)/1000)}</span></div></div>
+   <button class="btn black sm" onclick="finishSession()">Finish</button></div>`;
+  h+=`<div class="segs">${exs.map(ex=>`<i class="${doneCount(ex)>=setsFor(ex,w)?'on':''}"></i>`).join('')}</div>`;
+  exs.forEach((ex,ei)=>{
+    const tg=targetFor(ex,s.name,k), n=setsFor(ex,w), dc=doneCount(ex), rir=rirFor(ex,w);
+    if(dc>=n&&ei!==curIdx&&!(DRAFT._open===ex.id)){ const xs=s.sets.filter(x=>x.ex===ex.id&&!x.warm);
+      h+=`<div class="card coll" onclick="DRAFT._open='${ex.id}';render()"><div class="ic">${I('check')}</div><div><div class="n">${esc(ex.name)}</div><div class="d">${xs.map(x=>x.w+'×'+x.r).join(', ')}</div></div><span class="cnt">${dc}/${n}</span></div>`; return; }
+    if(ei>curIdx&&curIdx>=0&&dc===0&&!(DRAFT._open===ex.id)){ h+=`<div class="card coll" onclick="DRAFT._open='${ex.id}';render()"><div class="ic soft" style="font:600 13px/1 var(--text)">${ei+1}</div><div style="min-width:0"><div class="n">${esc(ex.name)}</div><div class="d">${ex.scheme?'Build up to a top set of '+tg.lo+' to '+tg.hi:n+' × '+tg.lo+' to '+tg.hi} · ${tg.w?tg.w+' lb':'your weight'}</div></div><span class="cnt">0/${n}</span></div>`; return; }
+    const wu=warmups(ex,tg.w), bb=ex.type==='bb_up'||ex.type==='bb_lo';
+    h+=`<div class="card" id="ex-${ex.id}"><div class="ex-h"><div style="min-width:0"><div class="h3" style="font-size:20px">${esc(ex.name)}</div>
+      <div class="sub" style="margin-top:4px">${ex.scheme?(n-1)+' build-up sets + 1 top set of '+tg.lo+' to '+tg.hi:n+' sets × '+tg.lo+' to '+tg.hi+' · leave '+rirText(rir)+' in the tank'} · rest ${mmss(ex.rest)}</div></div>
+      <button class="xbtn" onclick="exMenu('${ex.id}')">${I('more','s')}</button></div>
+      <div class="note callout" style="margin:10px 0 0">${ex.swapped?'<b>Swapped from '+esc(ex.swapped)+'.</b> ':''}${esc(ex.cue)}${ex.note?' <b>'+esc(ex.note)+'</b>':''}</div>
+      <div class="reason" style="font-size:14px">${esc(tg.why)}</div>
+      ${tg.prev?`<div class="last">Last time: ${tg.prev.map(x=>x.w+'×'+x.r).join(', ')}</div>`:''}
+      ${wu.length?`<div class="mini-h" style="margin-top:12px"><span>Warm-up</span><span style="text-transform:none;letter-spacing:0">${plateText(tg.w)}</span></div><div class="wu">${wu.map((x,j)=>{ const on=DRAFT['wu'+ex.id+j]; return `<button class="${on?'on':''}" onclick="DRAFT['wu${ex.id}${j}']=!DRAFT['wu${ex.id}${j}'];render()">${on?I('check','xs'):''}${x[0]}×${x[1]}</button>`; }).join('')}</div>`:''}
+      <div class="sets"><div class="set-cols" style="grid-template-columns:22px 1fr 1fr 44px"><span>Set</span><span>lb</span><span>Reps</span><span></span></div>`;
+    for(let i=0;i<n;i++){
+      const d=draftFor(s,ex,i,tg), logged=s.sets.find(x=>x.ex===ex.id&&!x.warm&&x.n===i);
+      if(ex.scheme){ const st=setTarget(ex,tg,i,s.week); h+=`<div class="note" style="margin:${i?8:2}px 0 2px 30px;color:#000"><b>${esc(st.lbl)}</b> · ${st.easy?'about 90%, stop 3 reps short':st.top?st.lo+' to '+st.hi+' reps, as heavy as you can':st.hi+' reps, 2 in the tank'}</div>`; }
+      h+=`<div class="set"><span class="no">${i+1}</span>
+       <div class="stp"><button onclick="adj('${ex.id}',${i},'w',-${bb||ex.type==='db'?5:5})">${I('minus','s')}</button><input class="sin" id="in-${ex.id}-${i}-w" inputmode="decimal" value="${d.w==null?'':d.w}" placeholder="lb" onchange="setD('${ex.id}',${i},'w',this.value)"><button onclick="adj('${ex.id}',${i},'w',${5})">${I('plus','s')}</button></div>
+       <div class="stp"><button onclick="adj('${ex.id}',${i},'r',-1)">${I('minus','s')}</button><input class="sin" id="in-${ex.id}-${i}-r" inputmode="numeric" value="${d.r==null?'':d.r}" onchange="setD('${ex.id}',${i},'r',this.value)"><button onclick="adj('${ex.id}',${i},'r',1)">${I('plus','s')}</button></div>
+       <button class="done ${logged?'on':''}" onclick="tickSet('${ex.id}',${i})">${I('check')}</button></div>`;
+      { const pv=prevSetFor(ex,tg,i,s.week); if(pv) h+=`<div class="note" style="margin:0 0 4px 30px">Last: ${pv.w} × ${pv.r}</div>`; }
+    }
+    h+=`</div>${bb&&tg.w?`<div class="sub" style="margin-top:10px">${I('ruler','xs').replace('class="i xs"','class="i xs" style="display:inline;vertical-align:-2px"')} ${plateText(draftFor(s,ex,Math.min(dc,n-1),tg).w||tg.w)} on a 45 lb bar</div>`:''}</div>`;
+  });
+  h+=`<div class="field" style="margin-bottom:12px"><div class="fr"><input class="l" id="snote" placeholder="Note for Siddharth (optional)" value="${esc(s.note||'')}" onchange="curSess().note=this.value;save()"></div></div>`;
+  h+=`<button class="btn black" onclick="finishSession()">Finish workout</button><div style="height:70px"></div>`;
+  return h;
+};
+function setD(exId,i,f,v){ const s=curSess(), ex=sessEx(s).find(e=>e.id===exId), tg=targetFor(ex,s.name,s.date); const d=draftFor(s,ex,i,tg);
+  const n=parseFloat(v); d[f]=isNaN(n)?null:(f==='r'?Math.max(0,Math.round(n)):Math.max(0,Math.round(n*2)/2));
+  // later sets that are not logged yet follow a new weight (straight sets only)
+  if(f==='w'&&!ex.scheme) for(let j=i+1;j<setsFor(ex,s.week);j++){ if(!s.sets.find(x=>x.ex===exId&&!x.warm&&x.n===j)){ const dj=draftFor(s,ex,j,tg); dj.w=d.w; const el=document.getElementById('in-'+exId+'-'+j+'-w'); if(el) el.value=d.w==null?'':d.w; } }
+  const lg=s.sets.find(x=>x.ex===exId&&!x.warm&&x.n===i); if(lg){ lg.w=d.w; lg.r=d.r; save(); } }
+function adj(exId,i,f,dlt){ const s=curSess(), ex=sessEx(s).find(e=>e.id===exId), tg=targetFor(ex,s.name,s.date); const d=draftFor(s,ex,i,tg);
+  if(d[f]==null){ if(f==='w'){ const el=document.getElementById('in-'+exId+'-'+i+'-w'); if(el) el.focus(); return; } d[f]=tg.hi; } else d[f]=Math.max(0,d[f]+dlt);
+  // changing weight on a set also moves later un-logged sets
+  if(f==='w'&&!ex.scheme) for(let j=i+1;j<setsFor(ex,s.week);j++){ const k2=exId+'#'+j; if(!s.sets.find(x=>x.ex===exId&&!x.warm&&x.n===j)){ if(DRAFT[k2]) DRAFT[k2].w=d.w; } }
+  const lg=s.sets.find(x=>x.ex===exId&&!x.warm&&x.n===i); if(lg){ lg.w=d.w; lg.r=d.r; save(); }
+  render(); }
+function tickSet(exId,i){
+  const s=curSess(), ex=sessEx(s).find(e=>e.id===exId), tg=targetFor(ex,s.name,s.date), d=draftFor(s,ex,i,tg);
+  const idx=s.sets.findIndex(x=>x.ex===exId&&!x.warm&&x.n===i);
+  if(idx>=0){ tomb(s.sets[idx].id); s.sets.splice(idx,1); save(); render(); return; }
+  if(!d.w&&d.w!==0||!d.r){ toast('Add the weight and reps first',ex.name,'x'); return; }
+  const before=bestE1(ex.name,s.startedAt), stT=ex.scheme?setTarget(ex,tg,i,s.week):null;
+  const set={id:uid(),ex:exId,name:ex.name,n:i,w:d.w,r:d.r,rir:Math.min(3,parseInt(ex.scheme?setTarget(ex,targetFor(ex,s.name,s.date),i,s.week).rir:rirFor(ex,s.week))||0),t:NOWT(),warm:false}; s.sets.push(set); save();
+  // later sets inherit this weight
+  if(!ex.scheme) for(let j=i+1;j<setsFor(ex,s.week);j++){ const k2=exId+'#'+j; if(DRAFT[k2]&&!s.sets.find(x=>x.ex===exId&&!x.warm&&x.n===j)) DRAFT[k2].w=d.w; }
+  const v=e1(d.w,d.r+set.rir); const isLast=s.sets.filter(x=>x.ex===exId&&!x.warm).length>=setsFor(ex,s.week);
+  if(before>0&&d.r<=10&&v>before+0.5&&!['mach','mach_lo'].includes(ex.type)&&(!stT||stT.top)) toast('New best: about '+fmtN(v)+' lb max','Personal record','trophy');
+  REST={end:Date.now()+ex.rest*1000,dur:ex.rest,label:isLast?'Next exercise':ex.name+', set '+(i+2),buzzed:false};
+  if(isLast) DRAFT._open=null;
+  render();
+}
+function exMenu(exId){ const s=curSess(), ex=sessEx(s).find(e=>e.id===exId), base=P.sessions[s.name].find(e=>e.id===exId);
+  const alts=(base.alts||[]).filter(a=>a!==ex.name);
+  openSheet(shTop(esc(ex.name))+`<div class="note callout" style="margin:0 0 12px">${esc(base.cue)}</div>
+   ${alts.length?`<div class="flabel" style="margin-top:4px">Swap for</div><div class="field">${alts.map(a=>`<div class="fr"><label style="min-width:0;flex:1;line-height:1.25">${esc(a)}</label><span style="flex:none;white-space:nowrap"><button class="pill" onclick="swapEx('${exId}','${esc(a)}',false)">Today</button> <button class="pill" onclick="swapEx('${exId}','${esc(a)}',true)">Always</button></span></div>`).join('')}</div>`:'<div class="sub">No swap for this one. Ask Siddharth if the machine is gone.</div>'}
+   ${ex.swapped?`<button class="btn grey" style="margin-top:12px" onclick="unswap('${exId}')">Back to ${esc(ex.swapped)}</button>`:''}`); }
+function swapEx(exId,a,always){ const s=curSess(); if(always){ S.swaps[exId]=a; delete s.swaps[exId]; } else s.swaps[exId]=a;
+  Object.keys(DRAFT).forEach(k=>{ if(k.startsWith(exId)) delete DRAFT[k]; }); save(); closeSheet(); render(); snack('Swapped to '+a+(always?' from now on':' today')); }
+function unswap(exId){ const s=curSess(); delete s.swaps[exId]; delete S.swaps[exId]; save(); closeSheet(); render(); }
+function leaveSession(){ REST=null; $('lw-rest')&&($('lw-rest').innerHTML=''); go('today'); snack('Workout saved. Resume from Today'); }
+function finishSession(){ const s=curSess(); if(!s) return;
+  if(!s.sets.filter(x=>!x.warm).length){ tomb(s.id); L().sessions=L().sessions.filter(x=>x.id!==s.id); save(); REST=null; drawRest(); go('today'); snack('Empty workout removed'); return; }
+  s.endedAt=NOWT(); save(); REST=null; drawRest(); try{ WAKE&&WAKE.release(); }catch(e){} HIST=[]; go('summary',s.id); }
+
+/* rest timer (timestamp based, keeps counting past zero) */
+let restTick=null;
+function drawRest(){ layer(); const el=$('lw-rest'); if(!REST||VIEW!=='session'){ el.innerHTML=''; clearInterval(restTick); restTick=null; return; }
+  const left=(REST.end-Date.now())/1000, over=left<0;
+  if(over&&!REST.buzzed){ REST.buzzed=true; try{ navigator.vibrate&&navigator.vibrate([200,100,200]); }catch(e){} beep(); }
+  el.innerHTML=`<div class="rest glass"><div class="ic" style="width:46px;height:46px;border-radius:50%">${I('clock')}</div><div><div class="rt">${over?'+'+mmss(-left):mmss(left)}</div><div class="rl">${over?'<b>Go.</b> ':''}${esc(REST.label)}</div></div>
+   <div class="acts"><button class="a1" onclick="REST.end+=30000;REST.buzzed=false;drawRest()">+30s</button><button class="a2" onclick="REST=null;drawRest()">${over?'Done':'Skip'}</button></div></div>`;
+  if(!restTick) restTick=setInterval(()=>{ if(!REST||VIEW!=='session'){ clearInterval(restTick); restTick=null; return; } drawRest(); },500);
+}
+let AC=null; function beep(){ try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(), g=AC.createGain(); o.frequency.value=880; g.gain.value=.15; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+.25); }catch(e){} }
+
+/* ===== SUMMARY ===== */
+VIEWS.summary=function(id){
+  const s=L().sessions.find(x=>x.id===id); if(!s) return VIEWS.today();
+  const prev=lastSessionOf(s.name,s.date), exs=sessEx(s);
+  const vol=s.sets.filter(x=>!x.warm).reduce((a,x)=>a+x.w*x.r,0), mins=Math.round((s.endedAt-s.startedAt)/60000);
+  let prs=0, rows='';
+  exs.forEach(ex=>{ const xs=workSets(s,ex); if(!xs.length) return; const ps=workSets(prev,ex);
+    const top=xs.reduce((a,b)=>e1(b.w,b.r)>e1(a.w,a.r)?b:a), pt=ps.length?ps.reduce((a,b)=>e1(b.w,b.r)>e1(a.w,a.r)?b:a):null;
+    const before=bestE1(ex.name,s.startedAt), isPr=before>0&&top.r<=10&&e1(top.w,top.r+(top.rir||0))>before+0.5&&!['mach','mach_lo'].includes(ex.type); if(isPr) prs++;
+    let cmp='First time', cls='';
+    if(pt){ const dW=top.w-pt.w, dR=top.r-pt.r; if(dW>0){ cmp='+'+dW+' lb'; cls='ok'; } else if(dW<0){ cmp=dW+' lb'; cls='warn'; } else if(dR>0){ cmp='+'+dR+(dR>1?' reps':' rep'); cls='ok'; } else if(dR<0){ cmp=dR+(dR<-1?' reps':' rep'); cls='warn'; } else cmp='Same'; }
+    rows+=`<div class="li" style="cursor:default"><div style="flex:1;min-width:0"><div class="n">${esc(ex.name)}${isPr?' <span class="tag dark" style="height:20px;margin-left:4px">PR</span>':''}</div><div class="d">${xs.map(x=>x.w+'×'+x.r).join(', ')}</div></div><span class="st">${cls?`<span class="dot ${cls==='warn'?'warn':''}"></span>`:''}${cmp}</span></div>`; });
+  let h=lt(niceDate(s.date,true),esc(s.name)+' done');
+  h+=`<div class="stat3"><div><div class="l">Time</div><div class="v">${mins} min</div></div><div><div class="l">Volume</div><div class="v">${vol<10000?fmtN(vol):r1(vol/1000)+'k'}</div><div class="s">lb lifted</div></div><div><div class="l">PRs</div><div class="v">${prs}</div></div></div>`;
+  h+=`<div class="section-h"><h3>Vs last time</h3><span>${prev?niceDate(prev.date):''}</span></div><div class="list">${rows}</div>`;
+  if(s.note) h+=`<div class="card"><div class="cap">Your note</div><p style="margin-top:8px;font:400 15px/1.4 var(--text)">${esc(s.note)}</p></div>`;
+  h+=`<button class="btn black" onclick="HIST=[];go('today')">Done</button><div style="height:8px"></div><button class="btn grey" onclick="reopen('${s.id}')">Edit this workout</button>`;
+  return h;
+};
+function reopen(id){ const s=L().sessions.find(x=>x.id===id); s.endedAt=null; save(); CUR=id; DRAFT={}; go('session',id); }
+
+setInterval(()=>{ if(VIEW==='session'){ const el=$('stime'), s=curSess(); if(el&&s) el.textContent=mmss((NOWT()-s.startedAt)/1000); } },1000);
+
+/* ===== PROGRESS ===== */
+function lineChart(series,opts){ // series: [{pts:[[x,y]],w,dash,c,dots}]
+  opts=opts||{}; const W=330,H=opts.h||150, all=series.flatMap(s=>s.pts); if(all.length<2) return '<div class="sub" style="margin-top:12px">Log a few more days to see the chart.</div>';
+  const xs=all.map(p=>p[0]), ys=all.map(p=>p[1]); let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  if(opts.band){ y0=Math.min(y0,opts.band[0]); y1=Math.max(y1,opts.band[1]); } const pad=(y1-y0)*0.12||1; y0-=pad; y1+=pad; if(x1===x0) x1=x0+1;
+  const X=x=>(x-x0)/(x1-x0)*(W-36), Y=y=>H-(y-y0)/(y1-y0)*H;
+  let g=''; for(let i=0;i<=3;i++){ const yv=y0+(y1-y0)*i/3; g+=`<line x1="0" x2="${W-36}" y1="${Y(yv)}" y2="${Y(yv)}" stroke="rgba(60,60,67,.12)"/><text x="${W-30}" y="${Y(yv)+4}" font-size="10" fill="#8E8E93">${(y1-y0)<8?yv.toFixed(1):Math.round(yv)}</text>`; }
+  const paths=series.map(s=>{ const d=s.pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
+    return `<path d="${d}" fill="none" stroke="${s.c||'#000'}" stroke-width="${s.w==null?2.2:s.w}" ${s.dash?'stroke-dasharray="3 4"':''} stroke-linecap="round" stroke-linejoin="round"/>`+(s.dots?s.pts.map(p=>`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="2.4" fill="${s.c||'#000'}"/>`).join(''):''); }).join('');
+  return `<svg class="chart" viewBox="0 -6 ${W} ${H+12}">${g}${paths}</svg>`;
+}
+VIEWS.progress=function(){
+  const k=today(), tr=trend(), last=tr.length?tr[tr.length-1]:null;
+  let h=lt(weekOf(k)>P.weeks?'All '+P.weeks+' weeks':'Week '+Math.max(1,weekOf(k))+' of '+P.weeks,'Progress',meBtn());
+  // body
+  const avgNow=weekAvg(k), avgPrev=weekAvg(addDays(k,-7)), startW=weights().length?weights()[0].lb:null;
+  const rate=avgNow&&avgPrev?avgNow-avgPrev:null;
+  let verdict='Log your weight every morning. The trend line smooths out water swings.';
+  if(rate!=null){ const lost=-rate; if(weekOf(k)<=2) verdict='Weeks 1 and 2 are mostly water. Real decisions start in week 3.';
+    else if(lost<1) verdict='<b>Slower than plan</b> ('+(lost<0?'up '+r1(-lost):'down '+r1(lost))+' lb this week). If the next week is the same and your waist has not moved, carbs drop by 40 g.';
+    else if(lost<1.4) verdict='<b>A little under target.</b> Down '+r1(lost)+' lb this week. Target is 1.4 to 2.0 lb. Keep going, no change yet.';
+    else if(lost<=2.0) verdict='<b>Right on plan.</b> Down '+r1(lost)+' lb this week. Target is 1.4 to 2.0 lb.';
+    else if(lost<=2.5) verdict='<b>A bit fast but fine.</b> Down '+r1(lost)+' lb this week. Target is 1.4 to 2.0 lb.';
+    else verdict='<b>Faster than plan</b> (down '+r1(lost)+' lb). Two weeks like this and carbs go up 40 g to protect muscle.'; }
+  h+=`<div class="card tap" onclick="go('body')"><div class="cap">${I('scale')} Body<span class="r">${I('chev','xs')}</span></div>
+   <div class="row" style="gap:20px;margin-top:12px;align-items:flex-end"><div><div class="sub">Trend</div><div class="big" style="margin-top:6px">${last?last.t:'--'}<span class="unit">lb</span></div></div>
+   <div><div class="sub">Since start</div><div style="font:700 22px/1 var(--display);margin-top:6px">${last&&startW?(r1(last.t-startW)>0?'+':'')+r1(last.t-startW)+' lb':'--'}</div></div></div>
+   ${lineChart([{pts:tr.slice(-60).filter(x=>x.lb!=null).map(x=>[dayDiff(P.start,x.d),x.lb]),c:'#AEAEB2',w:0,dots:true},{pts:tr.slice(-60).map(x=>[dayDiff(P.start,x.d),x.t])}])}
+   <div class="legend2"><span><i style="width:7px;height:7px;border-radius:50%;background:#AEAEB2"></i>Scale</span><span><i style="width:14px;height:2px;background:#000"></i>Trend</span></div>
+   <p style="font:400 14px/1.4 var(--text);margin-top:12px">${verdict}</p></div>`;
+  // lifts
+  h+=`<div class="section-h"><h3>Big lifts</h3><span>estimated max</span></div><div class="list">`;
+  [['Back squat',455],['Deadlift',550],['Barbell row',null],['Low-incline bench',null],['Overhead press',null]].forEach(([n,startMax])=>{
+    const b=bestE1(n), hist=liftHistory(n), first=hist.length?hist[0].v:null; startMax=(S.profile.maxes||{})[n]||null;
+    h+=`<div class="li" onclick="go('lift','${n}')"><div><div class="n">${n}</div><div class="d">${(startMax?'Started at '+startMax+' lb · ':'')+(b?(first&&b>first+1?'+'+fmtN(b-first)+' lb since your first session':'from your sets'):'no sets yet')}</div></div><span class="v">${Math.max(b||0,startMax||0)?fmtN(Math.max(b||0,startMax||0))+' lb':'--'}</span>${I('chev','chev')}</div>`; });
+  h+=`</div>`;
+  // weekly volume
+  const wkStart=addDays(k,-((dow(k)+6)%7)), vol={};
+  L().sessions.filter(s=>s.date>addDays(k,-7)).forEach(s=>s.sets.filter(x=>!x.warm).forEach(x=>{ const ex=(P.sessions[s.name]||[]).find(e=>e.id===x.ex); if(ex) ex.mus.forEach((m,i)=>{ vol[m]=(vol[m]||0)+(i===0?1:0.5); }); }));
+  const ms=Object.keys(vol).sort((a,b)=>vol[b]-vol[a]);
+  h+=`<div class="section-h"><h3>Hard sets</h3><span>last 7 days, per muscle</span></div><div class="card">${ms.length?ms.map(m=>`<div style="margin-top:10px"><div class="mrow"><span class="mname" style="font-size:14px;text-transform:capitalize">${m}</span><span class="mval" style="font-size:14px">${r1(vol[m])}</span></div><div class="bar" style="margin-top:6px"><i style="width:${Math.min(100,vol[m]/20*100)}%"></i></div></div>`).join('').replace('margin-top:10px','margin-top:0'):'<div class="sub">Starts filling in as you train this week.</div>'}</div>`;
+  // habits
+  const last7=Array.from({length:7},(_,i)=>addDays(k,-i));
+  const mealsPct=Math.round(last7.reduce((a,d)=>a+(L().meals[d]?mealsDoneCount(d):0),0)/(7*P.food.meals.length)*100);
+  const waterAvg=r1(last7.reduce((a,d)=>a+(L().water[d]||0),0)/7);
+  const sl=last7.map(d=>L().sleep[d]).filter(x=>x!=null), slAvg=sl.length?r1(sl.reduce((a,b)=>a+b,0)/sl.length):null;
+  const sessW=L().sessions.filter(s=>s.endedAt&&s.date>=wkStart).length;
+  h+=`<div class="section-h"><h3>Last 7 days</h3></div><div class="stat3"><div><div class="l">Meals</div><div class="v">${mealsPct}%</div><div class="s">as planned</div></div><div><div class="l">Water</div><div class="v">${waterAvg}</div><div class="s">bottles a day</div></div><div><div class="l">Sleep</div><div class="v">${slAvg!=null?slAvg+' h':'--'}</div><div class="s">average</div></div></div>`;
+  h+=`<div class="stat3" style="grid-template-columns:1fr 1fr"><div><div class="l">Workouts</div><div class="v">${sessW} of 6</div><div class="s">this week</div></div><div><div class="l">Waist</div><div class="v">${L().waist.length?L().waist[L().waist.length-1].in+' in':'--'}</div><div class="s">${L().waist.length>1?(r1(L().waist[L().waist.length-1].in-L().waist[0].in))+' in since start':'log on Sundays'}</div></div></div>`;
+  // PRs
+  const prs=prList(); if(prs.length) h+=`<div class="section-h"><h3>Records</h3></div><div class="list">${prs.slice(0,8).map(p=>`<div class="li" style="cursor:default"><div class="ic soft">${I('trophy')}</div><div><div class="n">${esc(p.name)}</div><div class="d">${p.w} lb × ${p.r} · ${niceDate(p.d)}</div></div><span class="v">${fmtN(p.v)} lb</span></div>`).join('')}</div>`;
+  if(L().checkins.length) h+=`<div class="section-h"><h3>Check-ins</h3></div><div class="list">${L().checkins.slice().reverse().slice(0,6).map(c=>`<div class="li" style="cursor:default"><div class="ic soft">${I('flag')}</div><div><div class="n">${niceDate(c.d)}</div><div class="d">${c.avg?c.avg+' lb avg':''}${c.waist?' · '+esc(c.waist)+' in':''} · energy ${esc(c.energy)}/10</div></div></div>`).join('')}</div>`;
+  return h;
+};
+function liftHistory(n){ const out=[]; L().sessions.filter(s=>s.endedAt).forEach(s=>{ let b=0,bs=null; s.sets.forEach(x=>{ if(!x.warm&&x.name===n&&x.r<=10){ const v=e1(x.w,x.r+(x.rir||0)); if(v>b){ b=v; bs=x; } } }); if(b) out.push({d:s.date,v:b,s:bs}); }); return out; }
+function prList(){ const byName={}; L().sessions.forEach(s=>s.sets.forEach(x=>{ if(x.warm||x.r>10) return; const ex=(P.sessions[s.name]||[]).find(e=>e.id===x.ex); if(!ex||x.name!==(S.swaps[ex.id]||ex.name)&&x.name!==ex.name||['mach','mach_lo'].includes(ex.type)) return; const v=e1(x.w,x.r+(x.rir||0)); if(!byName[x.name]||v>byName[x.name].v) byName[x.name]={name:x.name,v,w:x.w,r:x.r,d:s.date}; })); return Object.values(byName).sort((a,b)=>b.d<a.d?-1:1); }
+VIEWS.lift=function(n){
+  const hist=liftHistory(n), b=bestE1(n);
+  let h=backBar()+lt('Estimated max',esc(n));
+  h+=`<div class="card"><div class="big">${b?fmtN(b):'--'}<span class="unit">lb</span></div><div class="sub" style="margin-top:6px">Worked out from your best set each session, counting the reps you left in the tank.</div>
+   ${lineChart([{pts:hist.map(x=>[dayDiff(P.start,x.d),x.v]),dots:true}])}</div>`;
+  h+=`<div class="list">${hist.slice().reverse().map(x=>`<div class="li" style="cursor:default"><div><div class="n">${niceDate(x.d,true)}</div><div class="d">Best set ${x.s.w} × ${x.s.r}</div></div><span class="v">${fmtN(x.v)} lb</span></div>`).join('')||'<div class="li" style="cursor:default"><div class="d">No sets logged yet.</div></div>'}</div>`;
+  return h;
+};
+VIEWS.body=function(){
+  const ws=weights().slice().reverse();
+  let h=backBar(null,`<button class="btn black sm" onclick="weightSheet()">Log weight</button>`)+lt('Morning weights','Body');
+  h+=`<div class="card"><div class="mini-h"><span>Plan</span></div><p style="font:400 15px/1.4 var(--text);margin-top:8px">Lose <b>1.4 to 2.0 lb a week</b> on ${fmtN(P.food.kcal)} kcal. From week 3, two slow weeks in a row with no waist change means 40 g fewer carbs. Two fast weeks means 40 g more. Protein never changes.</p></div>`;
+  h+=`<div class="section-h"><h3>Weekly averages</h3></div><div class="list">`;
+  for(let i=0;i<8;i++){ const end=addDays(today(),-7*i), a=weekAvg(end), b=weekAvg(addDays(end,-7)); if(a==null) break;
+    h+=`<div class="li" style="cursor:default"><div><div class="n">Week to ${niceDate(end)}</div><div class="d">${b!=null?(a-b<=0?'':'+')+r1(a-b)+' lb vs week before':'First week'}</div></div><span class="v">${r1(a)} lb</span></div>`; }
+  if(weekAvg(today())==null) h+=`<div class="li" style="cursor:default"><div class="d">No weigh-ins in the last 7 days.</div></div>`;
+  h+=`</div><div class="section-h"><h3>Every weigh-in</h3><button onclick="waistSheet()">Add waist</button></div><div class="list">${ws.slice(0,30).map(w=>`<div class="li" style="cursor:default"><div class="n" style="font-weight:500">${niceDate(w.d,true)}</div><span class="v">${w.lb} lb</span></div>`).join('')||'<div class="li"><div class="d">No weigh-ins yet.</div></div>'}</div>`;
+  return h;
+};
+
+/* ===== STACK ===== */
+function takeQuick(id){ const it=S.stack.find(x=>x.id===id), k=today(); const d={id:uid(),item:id,d:k,t:NOWT(),amt:it.dose,unit:it.unit,site:null}; L().doses.push(d); save(); render(); snack(it.name+' logged',()=>{ L().doses=L().doses.filter(x=>x.id!==d.id); }); }
+VIEWS.stack=function(){
+  const k=today(); let h=backBar()+lt(niceDate(k,true),'Stack');
+  const groups=[['clinic','Prescribed by your clinic'],['supp','Supplements']];
+  groups.forEach(([g,label])=>{ const xs=S.stack.filter(it=>it.kind===g); if(!xs.length) return;
+    h+=`<div class="section-h"><h3>${label}</h3></div><div class="list">${xs.map(it=>{ const due=dueOn(it,k), dn=dosesOn(it,k).length, ld=lastDose(it);
+      return `<div class="li" onclick="go('item','${it.id}')"><div class="ic ${it.route==='inj'?'':'soft'}">${I(it.route==='inj'?'syringe':'pill')}</div><div style="min-width:0"><div class="n">${esc(it.name)}</div><div class="d">${doseText(it)} · ${freqText(it)}</div><div class="d">${ld?'Last: '+niceDate(ld.d,true)+(ld.site?', '+siteName(ld.site):''):'Not logged yet'}</div></div>
+       ${due||it.freq.kind==='asneeded'?`<button class="take ${dn?'done':''}" onclick="event.stopPropagation();${dn?`go('item','${it.id}')`:(it.route==='inj'?`doseSheet('${it.id}')`:`takeQuick('${it.id}')`)}">${dn?I('check','xs')+' Done':'Log'}</button>`:I('chev','chev')}</div>`; }).join('')}</div>`; });
+  h+=`<button class="btn grey" style="margin-bottom:12px" onclick="editItem()">${I('plus','s')} Add something</button>`;
+  h+=`<div class="list"><div class="li" onclick="go('health')"><div class="ic soft">${I('bolt')}</div><div><div class="n">Bloodwork and blood pressure</div><div class="d">What to ask your doctor to check</div></div>${I('chev','chev')}</div></div>`;
+  h+=`<div class="fine">This is a log of what your clinic prescribed. The app never changes or suggests doses. Any question about them goes to your doctor.</div>`;
+  return h;
+};
+function mlOf(it){ return Math.round(it.dose/it.conc*100)/100; }
+function doseText(it){ return it.dose?it.dose+' '+it.unit+(it.conc&&it.route==='inj'?' ('+mlOf(it)+' ml)':''):'As prescribed'; }
+function freqText(it){ const f=it.freq; if(f.kind==='daily') return 'every day'; if(f.kind==='asneeded') return 'as your doctor told you';
+  const ds=(f.days||[]).map(d=>DAYS[d]); return (ds.length===1?'weekly, '+ds[0]:ds.join(' + ')); }
+VIEWS.item=function(id){
+  const it=S.stack.find(x=>x.id===id); if(!it) return VIEWS.stack();
+  const xs=L().doses.filter(d=>d.item===id).slice().reverse();
+  let h=backBar(null,`<button class="btn grey sm" onclick="editItem('${id}')">Edit</button>`)+lt(it.kind==='clinic'?'Prescribed':'Supplement',esc(it.name));
+  h+=`<div class="card"><div class="row between"><div><div class="big" style="font-size:36px">${it.dose||'--'}<span class="unit">${it.dose?it.unit:''}</span></div><div class="sub" style="margin-top:6px">${freqText(it)}</div></div>
+   <button class="btn black sm" onclick="${it.route==='inj'?`doseSheet('${id}')`:`takeQuick('${id}')`}">Log dose</button></div>${it.note?`<div class="sub" style="margin-top:12px;color:#000">${esc(it.note)}</div>`:''}</div>`;
+  if(it.route==='inj'){
+    if(it.conc&&it.dose){ const ml=it.dose/it.conc; h+=`<div class="card"><div class="cap">${I('vial')} How much to draw</div><div class="math"><div class="st2"><em>1</em><span>Your vial is <b>${it.conc} mg per ml</b>.</span></div><div class="st2"><em>2</em><span>Your dose is <b>${it.dose} mg</b>.</span></div><div class="st2"><em>3</em><span>Dose ÷ strength: ${it.dose} ÷ ${it.conc} = <b>${mlOf(it)} ml</b> to draw.</span></div></div><div class="fine" style="text-align:left;margin-top:8px">Check this against what your clinic told you. If they differ, follow the clinic.</div></div>`; }
+    else h+=`<div class="card"><div class="cap">${I('vial')} Vial strength</div><p class="sub" style="margin-top:8px;color:#000">Add the strength printed on your vial (mg per ml) and the app shows how many ml that dose is.</p><button class="btn grey sm" style="margin-top:12px" onclick="editItem('${id}')">Add vial strength</button></div>`;
+    const ns=nextSite(), last={}; L().doses.forEach(d=>{ if(d.site) last[d.site]=d.d; });
+    h+=`<div class="card"><div class="cap">${I('body')} Sites<span class="r">rotate them</span></div><div class="sites">${SITES.map(s=>`<div class="site ${s[0]===ns?'next':''}"><div class="n">${s[1]}</div><div class="d">${s[0]===ns?'Next up':last[s[0]]?'Last '+niceDate(last[s[0]]):'Not used yet'}</div></div>`).join('')}</div></div>`;
+  }
+  h+=`<div class="section-h"><h3>History</h3><span>${xs.length} logged</span></div><div class="list">${xs.slice(0,20).map(d=>`<div class="li" onclick="delDose('${d.id}')"><div><div class="n" style="font-weight:500">${niceDate(d.d,true)}, ${clock(d.t)}</div><div class="d">${d.amt?d.amt+' '+d.unit:'Taken'}${d.site?' · '+siteName(d.site):''}</div></div>${I('x','chev')}</div>`).join('')||'<div class="li"><div class="d">Nothing logged yet.</div></div>'}</div>`;
+  h+=`<div class="fine">Tap a history row if you need to delete it.</div>`;
+  return h;
+};
+function delDose(id){ const d=L().doses.find(x=>x.id===id), it=S.stack.find(x=>x.id===d.item);
+  openSheet(shTop('Delete this dose?',esc(it?it.name:'')+', '+niceDate(d.d,true)+', '+clock(d.t))+`<button class="btn black" onclick="delDoseGo('${id}')">Delete</button><div style="height:8px"></div><button class="btn grey" onclick="closeSheet()">Keep it</button>`); }
+function delDoseGo(id){ const d=L().doses.find(x=>x.id===id); L().doses=L().doses.filter(x=>x.id!==id); tomb(id); save(); closeSheet(); render(); snack('Dose removed',()=>{ untomb(id); L().doses.push(d); L().doses.sort((a,b)=>a.t-b.t); }); }
+let DS=null;
+function doseSheet(id){ const it=S.stack.find(x=>x.id===id); DS={id,site:nextSite(),amt:it.dose};
+  openSheet(shTop(esc(it.name),doseText(it))+`<div id="dsx"></div><button class="btn black" style="margin-top:14px" onclick="saveDose()">Log it</button>`); drawDose(); }
+function drawDose(){ const it=S.stack.find(x=>x.id===DS.id);
+  $('dsx').innerHTML=`<div class="field"><div class="fr"><label>Amount</label><span><input id="damt" inputmode="decimal" value="${DS.amt==null?'':DS.amt}" placeholder="as prescribed" style="width:110px" onchange="DS.amt=parseFloat(this.value)||null"> <span class="u">${it.unit}</span></span></div></div>
+   ${it.route!=='inj'?'':`<div class="flabel">Site</div><div class="sites">${SITES.map(s=>`<div class="site ${DS.site===s[0]?'sel':''}" onclick="DS.site='${s[0]}';drawDose()"><div class="n">${s[1]}</div><div class="d">${s[0]===nextSite()?'Suggested':''}</div></div>`).join('')}</div>`}`; }
+function saveDose(){ const it=S.stack.find(x=>x.id===DS.id), k=today(); const site=it.route==='inj'?DS.site:null; const d={id:uid(),item:it.id,d:k,t:NOWT(),amt:DS.amt,unit:it.unit,site}; L().doses.push(d); save(); closeSheet(); render(); snack(it.name+' logged'+(site?', '+siteName(site):''),()=>{ L().doses=L().doses.filter(x=>x.id!==d.id); }); }
+let ED=null;
+function editItem(id){ const it=id?S.stack.find(x=>x.id===id):{id:null,name:'',kind:'supp',route:'oral',dose:null,unit:'mg',freq:{kind:'daily'},conc:null,note:''}; ED=JSON.parse(JSON.stringify(it));
+  openSheet(shTop(id?'Edit':'Add to stack')+`<div id="edx"></div><button class="btn black" style="margin-top:14px" onclick="saveItem()">Save</button>${id?`<button class="btn grey" style="margin-top:8px" onclick="rmItem('${id}')">Remove from stack</button>`:''}`); drawEd(); }
+function drawEd(){ const f=ED.freq;
+  $('edx').innerHTML=`<div class="field"><div class="fr"><label>Name</label><input class="l" style="text-align:right;width:180px" value="${esc(ED.name)}" onchange="ED.name=this.value" placeholder="e.g. Creatine"></div>
+   <div class="fr"><label>Dose</label><span><input inputmode="decimal" style="width:90px" value="${ED.dose==null?'':ED.dose}" placeholder="as prescribed" onchange="ED.dose=parseFloat(this.value)||null"></span></div></div>
+   <div class="chips" style="margin:10px 0 0;padding:0">${['mg','g','ml','IU','mcg','tab','cap'].map(u=>`<span class="pill ${ED.unit===u?'on':''}" onclick="ED.unit='${u}';drawEd()">${u}</span>`).join('')}</div>
+   <div class="flabel">How</div><div class="seg" style="margin-top:8px"><button class="${ED.route==='oral'?'on':''}" onclick="ED.route='oral';drawEd()">By mouth</button><button class="${ED.route==='inj'?'on':''}" onclick="ED.route='inj';drawEd()">Injection</button></div>
+   ${ED.route==='inj'?`<div class="field"><div class="fr"><label>Vial strength</label><span><input inputmode="decimal" style="width:80px" value="${ED.conc||''}" placeholder="e.g. 200" onchange="ED.conc=parseFloat(this.value)||null"> <span class="u">mg/ml</span></span></div></div>`:''}
+   <div class="flabel">When</div><div class="seg" style="margin-top:8px">${[['daily','Daily'],['days','Set days'],['asneeded','As told']].map(([k2,l])=>`<button class="${(f.kind===k2||(k2==='days'&&f.kind==='weekly'))?'on':''}" onclick="ED.freq={kind:'${k2}',days:ED.freq.days||[1]};drawEd()">${l}</button>`).join('')}</div>
+   ${f.kind==='days'||f.kind==='weekly'?`<div class="days" style="margin-top:10px">${[1,2,3,4,5,6,0].map(d=>`<button class="${(f.days||[]).includes(d)?'on':''}" onclick="togDay(${d})">${DAYS[d]}</button>`).join('')}</div>`:''}
+   ${ED.kind==='clinic'?'<div class="fine" style="text-align:left;margin-top:12px">Enter exactly what your clinic prescribed.</div>':''}`; }
+function togDay(d){ const ds=ED.freq.days||[]; ED.freq.days=ds.includes(d)?ds.filter(x=>x!==d):ds.concat(d); if(!ED.freq.days.length) ED.freq.days=[d]; drawEd(); }
+function saveItem(){ if(!ED.name.trim()){ toast('Add a name',null,'x'); return; } if(ED.freq.kind==='weekly') ED.freq.kind='days';
+  if(ED.id){ const i=S.stack.findIndex(x=>x.id===ED.id); S.stack[i]=ED; } else { ED.id=uid(); S.stack.push(ED); }
+  save(); closeSheet(); go('item',ED.id); }
+function rmItem(id){ const it=S.stack.find(x=>x.id===id), i=S.stack.indexOf(it); S.stack.splice(i,1); save(); closeSheet(); go('stack'); snack(it.name+' removed',()=>{ S.stack.splice(i,0,it); }); }
+VIEWS.health=function(){
+  let h=backBar()+lt('Ask your doctor','Bloodwork');
+  h+=`<div class="card"><p style="font:400 15px/1.45 var(--text)">You just started a prescription and have not had labs in a while. <b>Book a baseline blood test with your clinic now</b>, then repeat it as often as they advise. These are the markers worth asking about:</p>
+   <div style="margin-top:10px">${P.health.markers.map(m=>`<div class="wkrow"><div class="ic soft" style="width:24px;height:24px">${I('check','xs')}</div><p style="font-size:14px">${esc(m)}</p></div>`).join('')}</div></div>`;
+  h+=`<div class="card"><div class="cap">${I('bolt')} Blood pressure</div><p style="font:400 14px/1.45 var(--text);margin-top:8px">Check at home 2 to 3 mornings a week with a large cuff and add it to your Sunday check-in. Call your doctor if it stays above 130/80, or for headaches, nosebleeds, shortness of breath or swelling. Chest pain is an emergency.</p></div>`;
+  h+=`<div class="fine">General information, not medical advice. Your doctor decides your prescription and tests.</div>`;
+  return h;
+};
+
+/* ===== WEEKLY CHECK-IN ===== */
+let CK=null;
+function checkinSheet(){ const k=today(); CK={energy:7,hunger:5,knee:'none',sleep:null,bp:'',waist:L().waist.length?L().waist[L().waist.length-1].in:'',note:''};
+  openSheet(shTop('Weekly check-in','Goes to Siddharth. About 2 minutes.')+`<div id="ckx"></div><button class="btn black" style="margin-top:14px" onclick="sendCheckin()">Send to Siddharth</button>`); drawCk(); }
+function drawCk(){ const k=today(), a=weekAvg(k), b=weekAvg(addDays(k,-7)), wkStart=addDays(k,-6);
+  const sess=L().sessions.filter(s=>s.endedAt&&s.date>=wkStart).length;
+  const sc=(f,lbl)=>`<div class="flabel">${lbl}</div><div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<span class="pill ${CK[f]===n?'on':''}" style="justify-content:center;padding:0;background:${CK[f]===n?'#000':'rgba(255,255,255,.85)'}" onclick="CK.${f}=${n};drawCk()">${n}</span>`).join('')}</div>`;
+  $('ckx').innerHTML=`<div class="stat3"><div><div class="l">Avg weight</div><div class="v">${a?r1(a):'--'}</div><div class="s">${a&&b?(a-b<=0?'':'+')+r1(a-b)+' lb':'lb'}</div></div><div><div class="l">Workouts</div><div class="v">${sess}/6</div></div><div><div class="l">Meals</div><div class="v">${Math.round(Array.from({length:7},(_,i)=>addDays(k,-i)).reduce((x,d)=>x+(L().meals[d]?mealsDoneCount(d):0),0)/(7*P.food.meals.length)*100)}%</div></div></div>
+   <div class="field"><div class="fr"><label>Waist</label><span><input inputmode="decimal" value="${esc(CK.waist)}" onchange="CK.waist=parseFloat(this.value)||''" style="width:80px"> <span class="u">in</span></span></div>
+   <div class="fr"><label>Blood pressure</label><input value="${esc(CK.bp)}" placeholder="e.g. 124/78" onchange="CK.bp=this.value" style="width:120px"></div></div>
+   ${sc('energy','Energy')}${sc('hunger','Hunger')}
+   <div class="flabel">Knee this week</div><div class="seg" style="margin-top:8px">${[['none','Fine'],['once','Buckled once'],['more','More than once']].map(([v,l])=>`<button class="${CK.knee===v?'on':''}" onclick="CK.knee='${v}';drawCk()">${l}</button>`).join('')}</div>
+   <div class="field"><div class="fr"><input class="l" placeholder="Anything else for Siddharth?" value="${esc(CK.note)}" onchange="CK.note=this.value"></div></div>
+   <div class="fine" style="text-align:left;margin-top:10px">Take your front, side and back photos every 2nd Sunday and reply to Siddharth's email with them.</div>`; }
+function sendCheckin(){ const k=today(), a=weekAvg(k), b=weekAvg(addDays(k,-7));
+  const c=Object.assign({id:uid(),d:k,avg:a?r1(a):null,delta:a&&b?r1(a-b):null,sessions:L().sessions.filter(s=>s.endedAt&&s.date>=addDays(k,-6)).length},CK); L().checkins.push(c);
+  if(CK.waist){ const xs=L().waist, i=xs.findIndex(w=>w.d===k), v=parseFloat(CK.waist); if(v){ if(i>=0) xs[i].in=v; else xs.push({d:k,in:v}); } }
+  save(); closeSheet(); render();
+  const body=`Week ${weekOf(k)} check-in, ${niceDate(k,true)}\n\nAverage weight: ${c.avg||'-'} lb (${c.delta!=null?(c.delta>0?'+':'')+c.delta+' lb':'first week'})\nWorkouts: ${c.sessions} of 6\nWaist: ${CK.waist||'-'} in\nBlood pressure: ${CK.bp||'-'}\nEnergy: ${CK.energy}/10, Hunger: ${CK.hunger}/10\nKnee: ${({none:'fine',once:'buckled once',more:'buckled more than once'})[CK.knee]}\nNotes: ${CK.note||'-'}\n`;
+  location.href='mailto:'+(S.profile.coachEmail||'')+'?subject='+encodeURIComponent('Check-in week '+weekOf(k)+' - '+S.profile.name)+'&body='+encodeURIComponent(body);
+  toast('Saved. Your email app opens to send it','Check-in'); }
+
+/* ===== ME ===== */
+VIEWS.me=function(){
+  const pr=S.profile;
+  let h=backBar()+lt('','Profile');
+  h+=`<div class="card row" style="gap:14px"><div class="me" style="width:56px;height:56px;font-size:22px">${esc(pr.name[0])}</div><div><div class="h3">${esc(pr.fullName||pr.name)}</div><div class="sub" style="margin-top:4px">${esc(pr.email||'')}</div></div></div>`;
+  h+=`<div class="list"><div class="li" style="cursor:default"><div class="ic soft">${I('flag')}</div><div><div class="n">Goal</div><div class="d">${esc(pr.goal)}</div></div></div>
+   <div class="li" style="cursor:default"><div class="ic soft">${I('cal')}</div><div><div class="n">Program</div><div class="d">${P.weeks} weeks from ${niceDate(P.start,true)}, ${fmtN(P.food.kcal)} kcal, ${P.food.p} g protein</div></div></div>
+   <div class="li" onclick="go('stack')"><div class="ic soft">${I('pill')}</div><div><div class="n">Stack</div><div class="d">${S.stack.length} items</div></div>${I('chev','chev')}</div>
+   <div class="li" onclick="go('health')"><div class="ic soft">${I('bolt')}</div><div><div class="n">Bloodwork and blood pressure</div></div>${I('chev','chev')}</div>
+   <div class="li" onclick="checkinSheet()"><div class="ic soft">${I('flag')}</div><div><div class="n">Send a check-in</div><div class="d">Every Sunday</div></div>${I('chev','chev')}</div>
+   <div class="li" onclick="location.href='mailto:${esc(pr.coachEmail)}'"><div class="ic soft">${I('me')}</div><div><div class="n">Message Siddharth</div><div class="d">${esc(pr.coachEmail)}</div></div>${I('chev','chev')}</div></div>`;
+  h+=`<div class="list"><div class="li" onclick="exportData()"><div class="ic soft">${I('share')}</div><div><div class="n">Download my data</div></div>${I('chev','chev')}</div>
+   <div class="li" onclick="signOut()"><div class="ic soft">${I('back')}</div><div><div class="n">Sign out</div></div></div></div>`;
+  h+=`<div class="fine">${SYNC_TEXT()}</div><div class="fine" style="margin-top:6px">OMNIPOTENT · Coaching by Siddharth Dev</div>`;
+  return h;
+};
+function exportData(){ const blob=new Blob([JSON.stringify(S.logs,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='omnipotent-'+today()+'.json'; a.click(); }
+
+/* ===== boot: demo or live ===== */
+const MODE='live';            // 'demo' | 'live'
+let INV=null;                    // decrypted invite {profile, plan}
+let VERSION=null, PENDING=false, PUSHING=false, LAST_SYNC=0, SYNC_ERR='';
+function SYNC_TEXT(){ if(MODE==='demo') return 'Demo: everything saves on this device only.';
+  if(PENDING) return 'Not synced yet. It will sync when you are back online.'+(SYNC_ERR?' ('+esc(SYNC_ERR)+')':'');
+  return LAST_SYNC?'Synced '+clock(LAST_SYNC)+'. Your log is backed up to your account.':'Syncing…'; }
+
+/* ---------- auth screen ---------- */
+let AUTH={mode:'create',email:'',msg:'',busy:false};
+VIEWS.auth=function(){
+  const nm=INV&&INV.profile?INV.profile.name:'';
+  return `<div style="padding:40px 8px 0"><div style="text-align:center"><img src="${OMNI}" alt="" style="width:76px;height:76px;border-radius:50%;box-shadow:0 0 0 .5px rgba(0,0,0,.1)">
+   <div style="font:700 13px/1 var(--text);letter-spacing:.18em;margin-top:18px">OMNIPOTENT</div>
+   <h1 style="font:700 30px/1.1 var(--display);letter-spacing:-.025em;margin-top:14px">${AUTH.mode==='create'?(nm?'Welcome, '+esc(nm):'Create your login'):'Sign in'}</h1>
+   <p class="sub" style="font-size:15px;margin-top:8px">${AUTH.mode==='create'?'Your program from Siddharth is ready. Pick a password to lock it to your account.':'Use the email and password you set up.'}</p></div>
+   <div class="field" style="margin-top:26px;background:#fff"><div class="fr"><label>Email</label><input class="l" id="aem" type="email" autocomplete="username" value="${esc(AUTH.email)}" style="text-align:right;width:220px"></div>
+   <div class="fr"><label>Password</label><input class="l" id="apw" type="password" autocomplete="${AUTH.mode==='create'?'new-password':'current-password'}" placeholder="${AUTH.mode==='create'?'8+ characters':''}" style="text-align:right;width:200px" onkeydown="if(event.key==='Enter')authGo()"></div></div>
+   ${AUTH.msg?`<div class="sub" style="margin:12px 6px 0;color:${AUTH.ok?'var(--ok)':'var(--bad)'}">${esc(AUTH.msg)}</div>`:''}
+   <button class="btn black" style="margin-top:18px" onclick="authGo()" ${AUTH.busy?'disabled':''}>${AUTH.busy?'One moment…':AUTH.mode==='create'?'Create my login':'Sign in'}</button>
+   <div style="display:flex;justify-content:space-between;margin-top:16px;padding:0 6px">
+    <button class="sub" style="font-weight:600;color:#000" onclick="AUTH.mode=AUTH.mode==='create'?'signin':'create';AUTH.msg='';AUTH.email=$('aem').value;render()">${AUTH.mode==='create'?'I already have a password':'First time? Create a login'}</button>
+    ${AUTH.mode==='signin'?`<button class="sub" style="font-weight:600;color:#000" onclick="forgot()">Forgot password</button>`:''}</div>
+   <div class="fine" style="margin-top:28px">By continuing you agree to the <a href="https://app.omnipotentdev.com/legal/terms.html" target="_blank" style="color:inherit">terms</a> and <a href="https://app.omnipotentdev.com/legal/privacy.html" target="_blank" style="color:inherit">privacy policy</a>.</div></div>`;
+};
+function showAuth(){ VIEW='auth'; S=S||{profile:{name:''},logs:{}}; renderAuth(); }
+function renderAuth(){ $('scroll').innerHTML=VIEWS.auth(); renderTabs(); }
+function authErr(e){ const c=(e&&e.code)||''; return ({'auth/invalid-email':'That email does not look right.','auth/missing-password':'Enter a password.','auth/weak-password':'Use at least 8 characters.',
+  'auth/email-already-in-use':'You already have a login. Sign in with your password.','auth/invalid-credential':'Email or password is wrong.','auth/wrong-password':'Email or password is wrong.',
+  'auth/user-not-found':'No login for that email yet. Create one first.','auth/too-many-requests':'Too many tries. Wait a minute and try again.','auth/network-request-failed':'No connection. Check your internet.'}[c])||'Something went wrong. Try again.'; }
+async function authGo(){ if(MODE==='demo'){ demoFresh(PLAN_DEMO.start); return; } const em=$('aem').value.trim(), pw=$('apw').value; AUTH.email=em;
+  if(AUTH.mode==='create'&&pw.length<8){ AUTH.msg='Use at least 8 characters.'; AUTH.ok=false; return renderAuth(); }
+  if(AUTH.mode==='create'&&INV&&INV.profile&&em.toLowerCase()!==(INV.profile.email||'').toLowerCase()){ AUTH.msg='This link is for '+INV.profile.email+'. Use that email, or ask Siddharth for a new link.'; AUTH.ok=false; return renderAuth(); }
+  AUTH.busy=true; AUTH.msg=''; renderAuth();
+  try{ if(AUTH.mode==='create') await firebase.auth().createUserWithEmailAndPassword(em,pw); else await firebase.auth().signInWithEmailAndPassword(em,pw); }
+  catch(e){ AUTH.busy=false; AUTH.ok=false; AUTH.msg=authErr(e); if(e&&e.code==='auth/email-already-in-use') AUTH.mode='signin'; renderAuth(); } }
+async function forgot(){ const em=$('aem').value.trim(); AUTH.email=em; if(!em){ AUTH.msg='Type your email first.'; AUTH.ok=false; return renderAuth(); }
+  try{ await firebase.auth().sendPasswordResetEmail(em); AUTH.msg='Reset link sent. Check your inbox and spam folder.'; AUTH.ok=true; }catch(e){ AUTH.msg=authErr(e); AUTH.ok=false; } renderAuth(); }
+async function signOut(){ if(MODE==='demo'){ VIEW='auth'; renderAuth(); return; } try{ await flush(); }catch(e){} try{ localStorage.removeItem(cacheKey()); localStorage.removeItem('omni_trk_inv'); }catch(e){} await firebase.auth().signOut(); S=null; location.reload(); }
+
+/* ---------- invite (program arrives encrypted; the key lives in the link) ---------- */
+const INVITE='iJQ2BcdUk6i6G8eR2IZAGXgiVqzVyeIoSz-J5h_cr61zQUJcAZ1qrxr1r3JbxGheIEkez82mWn6Blxc_1HGwIU1cA176zpu6juiSvrbfmfXZoZor0_ZKZQona_f4Qh934imiOr--cs9kYckG5z1TIGDwJpdCcH-BlNpWxhNuS4m9SSBVkvjR4AQWeL80Bmx6mBO5oXiMpZH7fhlQthmM3-YWNq-l0PFOeAz73P4N05E1sqsCAxKyxuTcW_cA0HtK4U2QvagM6RcWMK0EQWebKlAKreNWLbpS5Dj2UadNC7zOVNjmEib3opgTFCU-23ebgXEoL6cWnf5WQ6psxdCRJov-N_Uhs8F42gECP8YgdZqNRIjStmjltvJNyjDVSdPtm6S4WiB2I7GfZeOQDNZlw63dNIt4BKpRNBfiCDaK3CPMCerzA6e33ehXiSrAsFZxsQUZXfOZi-SZAtwjGtYRgWVUhMPEJSYheU0hABWZi4ihpCmKVA6vmk4iW9s1cOgAhYXrtQFCARIPC4ZTNJON9T8U6X2_XLVsrPGW-Mw4NKMcBgw8tnEkQbar3c79BDddIt_yUogJDXkWbxAu4wuY8FjKzs20U-MrRANQOpn2dMHc16atxxuscB1NR4tUT1ZBeYBu9MTxBZ6TrYgQ8Mwso0A698iU_uEjimroJq4ZZelheGc9-U2OA-plcwsQW0kkT8T1gj8B3_ZjJdnkX_r1H5tQgfKNNd0HKdApQQhFCiAy4Ng7ufANajI6QzDH1LfQT2qehoYc6n576mO-y2oa2PmYAaYav10B63cB-bHroLH3z2i5z7iOnrAx9HH5focDlu4yCiCK_72LcBmIp_rWEJwhXdhxyiNCYDm9hlQU7OFV0EaqBC1UoFZWno25Td6ZNZ0BSqfxaO5NHxTo2tg5jRkiLrQSSMiGg8JleNmqWV2-A7dcXv-uw86LdMihkLjBGrXiuRN5ASE-ymG8sC4wBN7q0msOkm2YCniUFmEM_GtIO9nYgEIko8wdSwCQlLGdqtELyyBXlkItO5H_GmMPfDpjkLXZfLB-RgiJAsNh7rhRofkoda_U7aIZrOzqqb36LgLpX6-noqhEQ_SC5lsDNJFlHUnjlS67FevABvg1bTi7d24wzTRLaqAn_WaOQyLMVRv__mg5sr5ZZQlaTjiQ9l-H86U3234EMtmg3aHqA7UoAaFSmQnBL10fAV5vFsbai78XGCh_uBDTS8mYyJRvBzhXFgC-LYfGSVhpr22Ca3yCymdrZofhxtcQRkPbOTf80Xiw1wivdw9MarN1iOiG6IwuPO15uevubNPEXytGp5BdL8i_Lp_84zVxjruVWZwSUZhmohQr2-M3EhN74Ws6_4uC2GLh2Uco9IR51uWtKx3lTVRsivFWwfU2XyCLD0L7s1rolDsGwBZnEkEHnryM4HfNzVfD5kTCUgxd26-qFMo8JZZNmzyGdsKnYAPLYY5Dx1SIwls8g9of5tsbgYCCQybdkddOgembfocZ0uVoACXSmiXeMHhrzGXZwq8n22vh6hOBc4lK3tkyCTTOSaN-i9kmf1V7aWW1lTaKV7i_drfCdwKbC7KlpZw-EHnOXIZCna9H9Bd4InbVU2_piXScoSDpvgQTvm5rBI3ISLwz0jwu9zJKpceswY3MynlKg4pCI6UesqDUeBASkAp6qYquyiLkRYSUerxIVmPUzuZNMm1s0B6yRZmo52Xl1WUUVNOpwlnld-MsEqfoMhKiBikfXxstv0TZTrkcWX-9vqOZVkxUWQB9D6Szv9l4fT7FIDhaFPtfn_ZlYzexDydHdXWXson4cUwS32YnxBlQ-IgU8v5HMF67jZXWFcALR2wo8gKM_bVWo5cD2Db0z8XQ1ddLkI8aoyQlXe5Po87lSKjqDUdF8Cww0dqe0bcvV51Mas50jo7ATBWkJF6VPoJMvbg5aRp_54M7DzpT1vkRPPhcq5hXuBoHpbwO-vejYiVAi5ouqpOp9Py7mp4xr5N3XCOSbTH-CvHe3_A9lZQtn_00c0XDTpEAjj8roMvWTaanKtACSCIT1iI--sGEYPbNzURolJg89Td4Yw-QmDCUO1EKnm5-m36868h4PKyK4yxjG8pPYlY2793heE0xcyu6iHP9pf-nWsiORVtK3xdn1zP62dcorHMXK9PAVu5YR6kFkI6S8oebKU-SMHETzyYTxiPB0h2mZr1u01TpbuX8rP7ZmO1No2UJwh48O_u_N_3KEusDn8LznLi6sMP5h-QSnpFqeOYO-kQ8cVo-cWlJqpYzHZapn4j-j5npkx0DmSto5Dr5OhZnjBQo4hU47xIx9KWw1u4SvKJmmEwSLxZglwLm4CsduA7g9SkRPof_ijrkxZPP5EKaokxBWUWsZINGH5JNGQQhvbDD17V5fJ6cMUjqK396jsE2t7GKFbvtHdfyb2j1_Ju9pVNompcIjuKZtkm6Ot7io7J62w624b977X983Gqix550Mi_PRv8LUGZePaibUDaDgdq9jCBT1JmYK1tcJVoHuFSIV2OLMlr42nCaqzm5jxJyEI0NwOdlv0F0Q5IJ0MWz7urgUyWeowhF-SHMp-1VRcE50QKOG4cOdAHZg07lxlgTUGWODlUnZHpqHY-5UzgEpHB8GxX0xHbwfuVcGLb9MjiMrsT3wrhw9hjaDFF0n3IezsUdvpCUPlCNc-I6jqSrYp89pEe2MQZJuQvyRM5yp9BU6IVbDeDq0CMpVE3ARHic-DKnVRibnm3iJmtHvY8Ozo-Z47t3nNftQapqhS-ZXqngCUDo7znSskMpG_cX8lWLJLkEIiZYawkA2nbJY1xdakZU63GghHwwNWa99yuPqBI3aYV9lWwjJAK2-kAd9lOW8PwGpNjfkzvKCM6xmbjBPycfUKdFvOVkwKMBS3DLZuXrg7h4BGj9IdSOOexrIesTlDHcxsRZr8_yWe5yDBA8yc7QsIU920StflI2qFTKUrurpb8t0ETit84CjeTuCBDxa1yUE1kOP0Xg7XK43B1VDhA1ei4KbE-J-uZ-VGPj7-qULMwFeoIE3ZJMfLUgKw_Ag7Z4DLlqVWZNjEMHlGAPtNNNYLH0VKAlYTBn6vcWPkMdOI2jw4twUg53GHGilhU7IhWs8GE_l6OKRuGqy6OnkxV772tNNkzS-8z0DuqPA_wS2FwVjUnol6nB6V4WUOfmJ8_pVpxGZJw7iS6jHhz_tUi_IL67XEs58FEYwTnTiqk0CpPISQeptMuTZIEliV3-rZeloGUWKBMBAGptiWp9zIupkubV5AqA5ytUdSpesWo2pLy6-tM3NLlBrh_m_0dYQA-nMP4Ow5gsBUNpDASISWA6crn-8VwiyOelp4TXpgH4F8SzTm__P5u6ogBcHYbsRYgxX8H43cJAItmPBjPDZr9l2dKHECUMnq1cAT-u_uGhgv_yLFKdsr9hucyc2EYirHrN-y2dqXwMjvkHcWW-QNlXb7AT6T81SS4ntmzShm1P69smT7qBTK7YrF2AqlTOn9ruhn7yg9fC3nY9fzgmBQnlELn66xEptxeon96XO0oKeLC6fvr8h6Elwca0fGuaCCxUNho4IgdSF8O9CAZqOaF6zTgizSas8Y_7UVoTRW30wN5-94C2GEBe3pFZkHSfvBM3vqjnD7_o6WjAXk3xMPodfTk0WJzaj3IdnBq4fyeZrbdneyXPfaqatOECVIi_odDZ-teueCx4ch1f-Y6FwqDOkvboAwQ2IdnjmhfDURlcbdpCYabsNkBPymhh1pGPXRp90RSL9r_kYUdawcMMso2KOSDLcIpKwBk_PxgXAO8nxFNsmMvZvMPiFwbqaivgmhR1RHfyy5SASCjBFOz61kFYg46VGn7DzSB2UowpGwGxwX3Kz1-iWO2iAoXVAE7ZPoJYaAcrPXNVxEFpUJgvlBykqTBx1L6DCw7XtY9qKCo-LKQ2OYU898oXqDSpWdh2ZzfqO6rEAP6XiqBqCsUSvkG2xKrKa_u8R9zj-fduytbCkFmCrXLO9OccRVT04AVE3qwek6q66G9P5TrqcOhyJB2pYMMFRjSPIr_NellRoKhe9KOTf-oXAsciNtJy3EC1ZS-umGc32yTPsAaztPr-88cuukNUCkKpvlMvVc554D4RfqJRc6fY6e009Z8GEV9dS1jGADOBqEi26N1GUOJN6ikY3v2ocuTvRP74XbvDq3r6IU5evfbRSKkIbUS41lJ1pOnynba6foyzliU3JxIODziJv2FfSVk-BPTmKgjRmBDiG8E_gPB3wvGVgrtLLHkQ92M8URMywjg_ptYHpA3iC2qR4V1MG_P9nCLIWVSgFfn-Ck4blYsuB5OxjkHsKHh77XaNAy7NW0yTyAq3mKfAdszsSKbZ5CST4SMmYw9j8E9bKIj047n7dF5ia7qWisI2Cjn3Yh_efdG-S0bHP4crpkR6k7H0DP1slXgv-jjNapJ8rdIFnFV84CyCFURKeV6Hsj-2y3rg339wlHyZ0-WGKXIVEfXD2M8htDGkBXMNyT3F-W_U_SUi90JjQEfqQG2HwoVVcCQ3FEcfShInD0AbgVsyjAZGeqOUnrXum1Fi8tm1kEEFOLns4x4ZxlpnhhvporNy9npxjaWnVTPyzIio80WfGiMhxZUwUdbq76HivEBZPDoKOKdxmBDYnqlb1PAcA_i7OOwWydTFeIS2qB1vwO0-3tdqWA6TYJJKyYf0vTO2dUgNEASS1IBHYE6HXnUOl5oVjKOahKc-Lj2vKrlxPPLnvb5UFyWq0RZ71b3beWuf1YOuecefWKJCXaDV-eDi6NP5aKGxuAebRzmEg55YplL7V686WlDjfLmhayYqX5TP36B7G18tw7SIUzXWIrZbqnZNkygaoD29NaF8UM3WFLc2o1qWTfmbR8_nyJynVVZO29vq5vsqZOEwOym6rFvxzvHp-zu2m6eK3PF9vDNsia54oxv5YKvbNHETMXtkc1xhPQRhcfJgfskaHZ0TTT9cjnHU8F1mzafamsDKakOKf7jT5jjIfbXVZ115FyQqNZ6QOzX9xovZ53GTVUiQhBm3b1lncWZ3hKinhiu3gzUgAVtvjlz7EeAHn6h5OwKfPNHLBJLsM6Hg5YNKrYpjnge_ZPgKe3bYD_ZUfR-BjE1nlcDqr-S_Vjmi4olpHHPKG6WI_4-rZdbSeBuux3bZzS9_WwqhiwYfOKwIdj3bh9iazkbXBDDz8JTWxIvgwdR-AUAyzoPGGFWRnIfegT0pGd90U9-QvOitbwMMZMroAuk7IK1cdk2pmM_7Dc9OoPH_CuBwCyqmbsNE1xR1NIockJJZeiXOpG0jCPN-qSEW1Z1B4H9uQbheCF1o3BcryXRt3X8j5y5fn0vykQMTrtKwywsp2RgR5O9Y-tD0ZATu-VDuj3bWWfI-zCmZo3gqonc-BNTCpmFPi8-XD41rWjDT1_bQHskr-bY8fguUEkvFRmhW84lG-Psi0rSYdFFCLdXC3TvZ0zVguD51zZwTbz4qiwg2bYYxEFw6Bjtu_9xcXYcoggKYQqJP-td6Viw1RkP6WpVXLPGEz9OmrYj2BcA_zsdAZQdZZ8bnUolrzGHwcAcLgtbm4_Ch6D5RxREODCeutJGkHCYsgMPUqi9iVh3zrNQxGLgu-f48-aBwNaAEgLYEBEP9gfZu1eektswahJWrBxdSNsp7HjRaTKhzpTy2eVOD2yMwYR8iYF_vvtJ9sbMFDLyg8q-C85bUtYFIYwxvGvuOgirwUUWR5LUrRK3bkDYwq-H1ik9GPtw1hVXF6MkCrDJe5xH4mXN4RMaR3-7ErNbPhILKlZepPPw4-ooUtQuvd42i0Jarr4v5xhzeOFqyJhz9JCNfxzcDlgWifehLm16k2-OtiEnMMTyJPUoMkobzImfN8IQXHvxFZtGUjZuHubfBrCGe3G4JMF6_9mfSauGtlBOCT8OvxPt08d4rKzQy7Aqp7Ln6XdPhKw5flFfhkGHhM41HptTD7V9dajgrniXH8UpJ6PjP43bvOE-eMD7Mp-k4GrxyguH5L1AiTIesuKr-IHMYEwLLr1NVb7PMA9tpzFWPPBxXXm0jj2RTSPFOuHXssD79X9EQ8uxwF6Wb8CACjCUfxe8gLgl015ClXdfPeOKsJMR8D3z-gggdMJEh0Y6VTwd_Aso6bp-W5zbsW_txEzHzBx5kQKK4G7oQN-HHu0Z7E1AKshFAV4IrTExVv48a0ON3-rhtRP5olN4UImHCyLYsdkRvy746YanCzQFhVsQY-VOLE94u2RZTUwwqdFuFz6RyA4i9UUTy4Sn7egfijctyC2xbVlpjf1uAdM6pm2lI8d656pFTFulorYBofb9o2T-CZh2q_YotuwRdOuH8M360shBxGkWvmvbpJb3qmzTONpwrjY-MwuahnNlAbbrgUGyytVhToDJEd7PIWbudJc5CbIwzdzjSQF0seyBSKa_W-noqStaMVdE8P9wc8Timqwyg7M5yKcZTFUqf_HIWfAC_yQqNBfa7_C7GtnTnQ7efmD2IizPpgsfSbKvEQ2QTU3gBnxz3jWAjVAMZQkRzu6UVsylBpVjm_30JOC5fgDhKVLY6o3InVMrFFcw93e6DYoTd0OMOsO7UaSeszAcFZzbQ0Xoww1BXeWcKiCQitLdur9rvOHSg3pSiQ0StcMf2k3kNUQbyAqTelFkNr8UDPK1w2kbKSZtMNFP_yJgwy7gTTffuPY7TjRgyDtwrbJFO5KPc_xvN78tUUPM-XDzGtRBsAsXtN8SHKaZPnpvKpP42oKf8247P3kmDeMqArozNeWvIE7GTIlzohCcLj6fARI8pifJ83_SCquRCQavUBOLHvQI8cNhQaPsP8xqvVapR1VyFbU6v7r97DMuPy8UxToGx6_4MphcenHr5ChBZ1DtmXnrDNF0My-UbeTDJQkGVtqLgMfY4gFe9XiDd2M81maGf97vkBsY58kTG4N85_fc_Go9MnpAiisQy_EhjpUCJn8h64UePjo7JIhmI34SUa5LXkpv3-RqbnxvXoC4l2NYIjeQNljnfzrXbLksZQQWQsFKmCZY3ukFL-GIkFC3420FUNQOSaKOjx6btBvT2facGcCD7YguoD2eF55bWXTpkGRocP7rfvA95rgoazPakDlVWoHr-AUOKpi9jSI_z7whv0QsoV4kKyMRf9Vuqs9sn8YkxkbgaMvB3hpMCr_9RCs0eciMKRToR0F1B1b82vlV3rnZtPzDXGahFfvXpmgqtdszWxyQL_MzY-dtg7rN72As1RU3wdOoIpaa4O5kLQWTzvaeU1djdkothkNxdWfWsVK6zU-8z1DztHhUjcuHMvN_3OtPQU3UNZhdm72DZQOCTC4T1qyzV_N57if7vFe7UzAhz4uWEs-1XDBXDdOTGyBXCN56JwGwCN6VATsgTYgKwlrDe68NHE0JwkuV0d8quVnCTlMPhx5sUuGarNXZlcTwJa-r7K70zJf2sheh46UxoQC6MT36Z09jP-mLo78v1Q8B_Twpo5XDpGbLBM-iOSaBFr7zBq_XQa7x6uRe2K8A5DVc0nla3Ru4Ddqk_cbknQ421wdEAHgPYk22MTMVmHY0dvmP1DTKhjY-d8YM582K_B5725kbE6fGJXHpcllAxAnEI1FNKRAuaGGYaGlxaIXRLEhhJ4W8hhM9rsg51B8OTv2Wh2PsOoSPhj5zLe0ycXu501IC8B1EGCJhzEqSCFDakWvbxpQJRtyBsEN13OITdTKSxOz-d8bBYyO5GUH2ggsLKpHbgFevS0YNO8BB6tvN7WCnYCfNB1lp0rhYk4R1vihzl6W4ydflkIFEC8SoLVJ3s-OurkqTCSuF9sNjxZhO-eptdkaO4bFDQwPdpdooOK7Pu4QMBRHik3jsdZ3ksNxnK_9bQM7WkOobUMMj-UIfdFFGCcKZQBmTa1IjWw8MCuRVK11Bbshtgdy2OKE09sHT4TpMK-jfnno8BxjNjlZVZiNczxE3EWf_OTJXK4ch_JSolwfI0fIaorSX7WTjv2K36gE6yCrbD9I_AFqi5twqNKQnECZ2EBOHtkN-xOxVtFHuJTkkJ8Edu0jDbohd07SfLPImtfrwoCmQ9rh2UH6CJCQVn9FD_lTWideDOqjg6fEUArMifM_-VrzcQXR6NEPm_uN76gM2_LignrIpkWKwIZUHPMtJ4uBfiqmaJ8RgcQ5EgvAzyilXTEAl002Yz-ufg6QdI66h9SVDhUzQkzg4gMFCMvTKPipgAOTDLev3m6LWSByqpGeVfZtUWTi87VvJTcYGZ7Z_kHF3u4vx2aCYMvnrde0kj28tlfb8ig_t7o77XngHqfUge9Oo5OuRydgnZVrT2zEso_llLAyrgXKnHgANc0FAiqvgIcLCMlGepGC8Pe1Cy8-F7YR0rp2Eln4ApFVVq7_prdwY1f5p6eUy1fv0s8U_NcX5emWKFYhRXyqmLN4C6rtB7H1OB9qXEbEpd5LvCO2PaW2VEVdVQbrXorNlzfUIe34pBjk_BkkGscaP0zzlz0U0iGVmNcmLn2HgL4nY0MOAcMpXtJWG6RQLXxfCLmAeN2KgICHtWS1JKu9Oez41n9u9wInsb-3P1R_0zzl3oGNnN7gBBTCNL327NnNFFopTEVlTeDQZHwvE3Qj1cz4ldQqMXk6c5p06b2lmQO-XTjuFhXKRwXvGCJmPMDabgVOvCWn4F6N2P8qx88_RFs3VGxqQa8NZ9eCIkrifRkWEbc6Reh7HvrRBcTx-1DpvpKLWcGSMDDjuZdnvDD7-NhjAYbigsZhSswutxhhdvva6Cb2Eu5rX8WWz8yEQNj7LzF2wjJLZNhxhudz6L8Sa2fWk8Ffi9dZckxzo8cMfE5I3vCB-XCv2trmYCoTbHI1oZ8AuupO0k8jcnLot9_SlV1z-Ve_7FTtCdfGA7MU0JqZM3dPMvNfQxCVtyLSHIqPio5uCDlKxUfsAT-yPJgrMDq74Ly2m3q4j1ab11gzKB1k-axLprvuVgsfn1cJb4rBnMi0Ea97kHvQxO2U0h4pWv9qP7pDGDoBkSEzEh2wj4yE_dBFamtn74riiounKPUfxD-Qt50M1VHfp-bzMBnVcdpTS9W7dmFMph72MsJjenlDaGFSZKTDc2U_4tY2nN51MSr-JLykvUqCbkRIjRYDIkpFwqZFoeoE8yzNlZ6jmELRQ0rC4qLOyilzJOOAQtfrU8sEf0DzaBTYZGtGV_NEh0dDcAKQVkHtTSnJqKZrg072kgJgqbVbnb6uiGAy92NnpW3bI2_wj7fu8Gsl1KLw_hw3CB8Q08GnU05f4U0ciogEfwwkT5-iwBQDUkQOxu0ZuLatUW1Kk8b9FXYYHichClbZPsu86VvlM79j-7Ar7XrPicNY0l9TuLkYf30f2Tm28glJI3RLTZ8wCk_93R_MFryNJ2HRC-Ink9B_9p5cgHmu0NlWg4UPreG0F0rMsfwJV8Doq35FIQ2SfNHK3zN_gt-jzbylgXY2ZDTk4HIQayMjXyJNmJ-4NZY7y7CEbsJeQ8cH6xCPgjrFV6Hnxj61rH8FCR0mdTRViiZ7RzDKKw3hCJ1Kh-KDo6LFzgI5y3y5ZvmSnElByRVrZFuJE7cMkqJzAKbJkhUcRNMbhq3KHuWpWLXY4l532LOxiBZ3kj9f9coT3O_mAFTM2wtLLCv-QbDjR_fYf6l18le5uAqLmIRgiXrEmYwqv_oxE7VVGzRXJkcOvmMBy7OshK6soaDfeeTZpMpqXN55imG0l2EHwzO5zat1mcjJIiRHJe_p-Tod5ZUq23BhqtkTKVO_IWxkm008z3ui7jz7b7GxB_lW_lQNH7jS4sKpgUZZitYrAExZfN4pVii5Gln3erSqp3q5EE0aBEky8eaNmwU2tuTUVijAH7CvlSaL8p65OwHcp5_ziZbHcFHXEqgJPUhBJLj4-shwxroV5Fg6wnj5HomGtsHAEbXF77DIlBirICE_0bbGLjw_msOtNyXDwtH-osAKiRB5ao57eaULqGg_G7JLqQliIlmJfM043jtR2-OGQyJNzqPTAIBQXaDrFVvepQC81t0CPMaYwodaJTJscoOLEtzM4r86Jv42anXhlckFycxhYXLWX0MfrfVTdA8bxTjo18-RCig_j2ioHZagBfDfp8Y3WtojeokXEqfXNEKP0U0R2EciPbObNHFYQt45jqXUYd9hILgugYzqNzSHZIqyEdElXbngg8flnYrGN-pw6Qp9_TTempLFOP4I1mJvLaIOs3vrNX5tSwBkqCMZF4Ua9RnJZwbsxihId6ZOcQ6LrM1Xy2FrNWIQSr5NCWnpvRmVl8HStfX7Ht7tLYSrqd9BemSSZnEnefjDsdbh_GwPJpyVFGpGn7qaKvbaoTgb-GCJvCI7Cnn3Yh_vuTt3gICuFFZh2q9q8pS_-_FI3KvXAiBdKOMJKMR5ubeOw-scxlXBuhveI_-3CyLnf2XPzejBeUrmcBe2VVSCuRUfYm2EddJn0jA2WAZB39hrANvEjHNaocJxHsxNAsWGjX7U1kGnXFt_9tjy0Zj-kihQa1C25HC5oxMTgJDYSMAU1603AyygRpohqljQKo7_AXlWiu8r8D_RzIG6RXaVlwctDeagFdAHBSZFJKJs1xxUmMY4rUKgfCI6dwTEF3NILZ44H9r0Wh5bQ8eqiOfx7dzjence78CUX0INEfPhaFgaRG07ac5zm3y-hLfiiMly8FB4qzg8nRbk6EQfBbVtP5Ugjz8fz1-xUDAsAtlbJ9ymcO3fpKiFOshTtuwRymQb9Q3c8TSrIL2_fdg5ynbpcSHRhbQKdlT6SBn8RInEKkg6N8KL0a4a017rldY2YnEIShuUYsgGOoLew1RNpmPxfUGAwBkMpMH9xTiBgpIKfiCBM2iVVrZRczItfkF4ZYVkdItHFe3Hv_S4dL3G1JyNkJSHnlzyrjQ6iXsNJ4UsPfAYe04Lehn_jHUKNRLZMZIlpiyryd1TfEIi07mtmKDvr00VVY6b-S3jzNZ_K-Tgo75LhQPg9Jl9CxnRKjjRkzOJpMb4wrgYdbJJmK98TBcrsabZkOj1zWjLrwAs7xS9oZ81esbC0NTetjWoJjwnonxQoJnrFubrO9e-NV1ZVSkZmIBBVoHhdx-hRjLiiWpusl2y-8Gdj_68gQs0V8kM63b6s4LOMdpOWEIS9yz5Cf0s2tIiZRTNp_f8i2wjSP_71jZ67__0U1yyG8wXudKkd9B02BjQUTXr-BITapZIe-HLqM7g_i1i6Dip3KzJmi75IDTRVAi8Gfsf6lrTrsbq5hmu_kbbA19IoxonArU3pQWlGtl3-7O1QpxUk2kfEtE5l9As32l4Ogqwopbzul9fM0a9LqUXeS2twnk6NuH4raK2BBd--Oy4BKUrnnKtKP-wCjNxN5jhYUdqal5V28z9aFfFmxU7cdfKigl1m7io1UdqUGiiCVbd0FvMIaSQ5PCxkYtUYPEqBDzYT5tpvzBN929iOzlZ51cCB2Ep2-0jj4y4JohQQn5DntufWSCycpOenLudeCnavEW52chM0TvUIE9-bjOB3tzkC3DMQTRSs7qy8bEheOw2VoL2s80z_GoH2JUo6yHoGMCgKJW_hYXzyPpeatiYvv5ObiCnTNng5vZB82qQ7yqSOB3aAArjBYyWaWyhvs0AIqIfKbj_1N43L9C6vuLQ19BqtmwcG-3qsVznFb4JXtl4zuik0OKrGFVHcnC6bcB59xn_5vuxdacisPQKiPXsIGa7zZG9Gs4oln2xJN1kXOk_VmkSm_Qjk0lwnKBC-H19IF8iuZIuz_msaRAqkhFkC8yDEEr5bDvkWkbnhvGhhYrUEfEVVKi-oHdkbsgj_hXZ2jI4XWyAOLCtm-t4JdoCLp-FRsY4_XhufstyndBo4r5onwk8bXyOzOamUK7Cr3Lwpc4LgxVn4D3-m3v2bJxbx_eYzNxJJ5xgkOavpIcZm5JvMr7hqpY_cnL9F3LVw9cRm7pPAdWMWz8rR2J2vlKR-seFZu-lPVkbgL_jcuZL8OMlecI3SCDTGd9R47Av2VdaN7pIwsOofP-kHeQV1q9HBkjM7tMCX9Esn3Rmkm5NoFA9it691Te4HPne-UPDtFlPfqq6_q3T1uwaHgH1bm7hiAoKK37g1ZNtQkOSJ8Qyo0mEx4UTy2d7TMa4QLVFFewuIJnkaEnW5tEnrXUyLX619hg4ST00LJDxiuED-YV3M9yGqE0M8iIG8ec6STt3sa8ToYrXfTQ4IakhFuy093GTt4_Ernu_m0R4X8nswQw0XDDYalszc7hBvvUDYe1nPjkysqZKho9cZsSMCVBiuUANxi-b17TLjxfRamsl6JwEuinkq9cvOuheCNfYqgo8Xb1DUsamdC2D1uplX90uP-ztrW7-3EmK1ZUmIgYkNQ4aPZZERfbJr8257uGq_OgWGLQ2h8466lFzIt0SurEF2cGqq_t53r37BwzqOoymJ8CEHqsxMVyBjicg7P8jb8PipoQ12Y3--nESYhqUEdYTGwdKB_CfTxNmZwsGrwFR5WKH6TsfMX5gLqX7yu8qADpkU0XXDAKwT2HrJ0kHTUFAUtF5QcTP_wmjHWUrKKaa0wDlrrCqJxpUdpCghXM6_ufzP_dIyHMy6bS2nPokToKeSLmRVFmuBFFpaDrMpYHwSuyAxYoSINh3lYZFcaGXGCXKv1Heqjie7mLf_LevIvtlVJN6lbjFMgbMu6bDsF3qWAV5kWWISSSJ-EnJN4COAcl50_h-zd4-nfBKIIfLucR0iCsfJg2KUUTMcLYf5itMKRA_FqKULxu2WZlIcEOqKZwAxSaYX0utdXFURNoUkAXwNinu26kiE-Bjta0vLUXPDxdfQrTiI-8XQdt9MgUeI4VedU_6jlbLTkB68VulBWgHfFniw-V6gInjiawBsTXoKGdu2Ic8Q5tCFqBcL5Pt3eeV2NGYM0rIew4JB1T0tTFpA-t1FXjw15Tj61bLW43y8l2tX8liDWWII6CvRwSTSuiM5-YDOeXvpRRF3Rz2-EMxa0eIw51YDdMC34W_DAhnGb54YujgELcbIoh-5h6CS-DyD-4YLVBs0SKhqPXkE7_7PnRn6M1Qp6iaj-FArCgG6jM1Xa8X07WyPiHVNioCg9isk9IKp2Unnjs_bDGwKb5IuBd6jIK8ESvdmeCauxnra_WjVUG2iIXJIJwr71RRDfkBnNHCEcUCDgk9VV2F62SJdEG_pfyjksf1nQX2wqfhNOnOBiYamfvZUGwR_V3qHG_r3yw_E2KoJ5t8FQMGcQUKqQ0GygMkBNQhF_JZV7qbWt6xbjPXELiUANLBAriAiZ7B3WZHpE2NeDR954GzVEEJlBpIVf3fmKDzcz0oNfkGb2DBOu75oUoTVlQe7LQQjR6Cvaedsm6QvSZn2wY9IxRiBbnYLb4Gd60ybI2zsoNl94BfCJmnTGdAPb_hJgQv6FOglTctwd7-J0sglgp7lXyB6ffGZfeQ7_1-zL2WERFCY57NPfjRlkGncydpLMXxi0rDFzyEo8M4dNm6rg8GwOJmsguLw4em1902vpAWkQcCwCjw4CxEb4t5Slt5CzVIx1DKP7cq3-SzaIpFiyNKnrIjGKNTdZAy3KCW-ukgS0xVTy2CzwAQiTzrcUYbsbddSDRTu9Qjzam_H2XEn2jmR44SNgW6HrsLxuQC_3s8Ws7xcCwaTrfOg_ICZGomTT96HTwnGoMZViAraLXmAz94_EOnnBkh6r6ejh_jSZji8OqmSshfw4F8CtDh3_5O-XyA1g8lbCd5JbHixFN3-oPOIgPmU594lWTUE1TXjT_1qZDTQWAQYbOQIea-KmEmqyVCqwSFlVb-S5Df7-MxlVJgvs1UGOMzxK_147sf3QxjWmTeG4r1lPG23HY0g_bJgpXGU6tY336A6KAcRHu5Yf01S3fZNq4oX5Z69mT-cDKfbtlPP-RLuTG6GWNQgPkV8DNPY2Tu_Zr1WG2wi_4MENRHC27gpd388txnmDIre-Ku4ZOSbdK7fxOME0r7vH9pWjVsGEmykH3Z981L-gM_0bxeXFloZh5dacdA-7G6c6rLOcEr8R4xZ-HUZE4dH7W3La6p-9ec695X-qeNulBbRtV2jJX_qqCPOvOj8NVfP7h1j_IKhAkwc1aweotyVqidfxtzknm-YpJh9sLSm9e0SBSKCqzQ21UDaxTBZArHVzj1395HuHBg1ACc0MBrcJx012USk5FEwWhKhMZ5KWHdkcUzvSQoykZ5ncEpAXBHS3EsggV0mZllJ4ANgsZ7yGDOvr32IQ5JWj0fJGuJZsblc82b6w4pUjQ1ZVd2aeVXeJkKoYRVhU7at9gRqlULQUcq-KdOq6B3jVNBTbYpWLXc4QflSrU1NoqR_VsnVa9pxt5uYI8BYVyoQhT83RLkIlK64RQBKr28n9XyqWYntjPrjf8I9XWoiBnJhnd2CtUvvncSR5fG69pkTJ_6-WATWky3Kz0hkX_iq3szKYyWh4pJm51fgxbNSu430WrrH2MDyhlNIWaFJJLH0JyxbktPivNwhQU2lBpMvGWXLAglcR4Adqt9Yq5PEFBhxYwGhHOqhJGhuDFKZ0Qg0UMk_w4HqvoN2NDKvjMcV5MqPPKHZmXRqEl6sCTSdx3gp0EbRQAI_VCIa9UtaM-krOWMvTO-yZiIholXm8NXdr_hN7ytYVKxrLjsse3OQxrEk-gupZBwg71ILlA1oivu1GttT_mCYPAIaq8fcQouL47I6ghFg9vI7rWYKiubk7mdawzFlEqnzU87CeZ_gSqxvmGN3qY79YilDnuCQPgArl5-Fk0v8ofHHO5bHOHXev6uTUdrVcNu9tJw-zCIoMy5GrGBD_7QGt9jqa5tiRoWBBW5fqjr_7SS5O29UCtmh5ZuAZd3FLSiojHizVQBCamJNsRMpLCb2zeiR7nuymwQwd5rRq8P_L2vFJSB1nef2_VupeIIOyUNetURjATyhLuDSML6uePNnUTjQszEpLHDBg1N8A_h9xrEjov4yKg5AlVegXE9CUBTshlTecevKncv55nELbjCwL0IPGyCE7AKJDtGAh_VY5wEKqT0Jkpr6lvCTOURkxBnzNzwFROmSNLNvXrhb1QxHrtBMAn6-aJqdsqPGLE5qRApAcbF8jgYAlVuF4ogoVE-wNumrIh10io-DZilqy9WoXTqMrZG6DY8sFDUYd7OxN1lZMUJkYJfy6dkg4PgzsI5GDkkjd_NHK_VbLA5l8084iY0-FssqciER6OPST-c5qELbxPgjdrxQHOZX-DnaCOw3cCAZoyKDT-qkT4cXHkGPtwmkLxY8AAvNMNuDr8jAbeHu39M5xy1_NFq0wMErILC3qkM7aaeRuN13rFCU4BfVZluW3NkYRkcMrG_IS8h5Vet1YH2eYf5U-1WvCiPfbQ91lDgDNDJfrcC2tAqBVRi678rI3y_ql213R4UIoZDsm9f_yH5vyxJOLJdHaoouMUlAz-U__GlfxzfiTzPH8nUowgoBLdoxV4dAbzXwfy_oURpeC4dhMNwpHEjwPQA8RwzQCRZwrjBtXxuxaDZz1Ddli9U3C0Q0MaKxMp7pfQKwIqK4LNux_JUL5SnsCn6EBGJzMcumgnOERh7pGASVhlq5w-GxjWI9y_17GCcEWXqvYqdMjff0Sem91XSkgMES8PTd4bZJ7M6HVLdrL0_HoQPwHPUr7QwT0VblFyCZqpIi636hqQh6t-f0GNtevUgYTmzY-YlNGYSZPgHkMddIWaOo9s9Erl4-uifCugTgeWeD7WadDtRru3xPooTOY4pQH8dvL7-tto0d1yba4WMNH_04I93E7qxbHWkb92_An4unUPJ1JcJsDULdcORjxZWXbP1kFAziWjRLvAknoNGVk_gjPDsdjp1hcbMFTG3WcHyLYjyfE-4yLDZGOrd8-jYq_D1H1-HsBTZ7rSTjwAIEBJdfEkFR-FMBszffSFhk3ogRXJhCoxjPrfwwDX19if4-q8ne8Sy4hP3_N-ZaddQgoBK7eqkmFdiz4cXslngsYVHb5g27dfs6pL7Yn5cdB74bJWi-kod_RK59lLKZQ360FHfdqV1zsXMiq4X095Qk2QXBBfg0I1K3D6oa9bzgpsNHx1m3Ec3fDwUPrjopVnD4Sol05OIA2EJesPQ47cdMH1nNE7Siun0lTi3j7aH5N-XKRxvGgrZuay2cuGNJodkB_2V_KJhEIwZj6RK2G4DrEDHrFUPKQ2hy6IB1O1fke4PGi3Ndu8j1yXA3Evz92QtDZ-wQ5ykTzBNVQ4nEsucW_Gjveob5oNagEpVniPIocqB5UNCvgbWq5Rw-vIoBgfwrQBKX5HR2krIuRfKMBFW8Pdk2MH-jCiYcAoboED64DOqIOpLZMBaNBGVF72aK-HiigCXVQEMPXGaG6t83kDpU5a9FtgQ9Ne5HNdkpvxrRu7Ja_VviSiaqZWbjC3gnnjt9Jn1UjKA6hG5WGA_2jcbPhorRgIMyyFM93ABaL_yr2zGMykuXwQeNB5kWJA_Fc7VINaVfjP6iQTxKMFfGWKQqzzGsaWRnYgzku-TgoCUc1lbHrrT_poDJY2Wqoud-fWzrKlxvl9BXhFAanh8IKyhVcwrHEKGnc3zKUqFNKWdAxzEc9qQ3WbY9WUe_eDl7aW6KBGwmSqZCsNMgfCMKY7Dec2pbirpNfv1jtxqsQNPTAZqJP8SRqUTtiosgAlMO4MzbxI3RtVqLBvozYYrTX4WGYQF7IBPsnEiumH2gljiy4cSMv8xAGEC3inYWg4VDUeXvBGmmM1PYwxrUTu9HSny7jLjksesSe0bvy3TMMsRxCiksLWKtWTRLE8kwX48iF321j0vaGJR7wl6mTZE3m3fqz0_j1Gemt5_74EeeiYGjIoA1ao_C6PIz_N0Em5OjdcQIAyhevVjlaYf5V44130mk9MqClH8ijHyMI8qqt-9rpMAti7123QtpmHfK8Z-EgSTPRNku01y-Nh5UONDvn9-Yye9Rmhorw355mVrXNP0jBmXAb65OTf7YxzmjxU0COD79cMVNj_NhaWs69TgWewyjhNwJUjhyDQOm_Q7cRWcFyFDQIUIp3jox5UgDgQs2o5gHR096lRSWdkuW7-6WmUsxBWsSaIYOPhpOTGzqWXyXrIRNBjpiZMslr9Mi2hjwRbFkknfIIPkhVOzSbEAYqcKDDdxMrdNiH4yXpakFcUNt9X_VE12Wy_MlybbtNcrEuNc48nLBADBis8DNjWS9RLQt9HkSUXmZUwij0TW6DApDXvEqakBoqr8zEd9acbjYK3YXYPeHM-vygOoBhUvau0NsjD5sM-ZJhNhqhYRG_cqfbncYoSOkSQr8243MgcSSJSBjU6DFCIcqQIDLFgU5-vfPWufEK0SXEiQwXx9c7VPGxzXAdhzBkmYwV_JA6B8CAWeeMRxsMamLc7z8pR0xiaeJERaJINQ_gVLCHWgCdXBEBQYiyQz_8bD9ETlMo3WlI1hZ8kKP-3ok73oZVE-VXMr09MO0n7T5j3COlkzYOcrLZ1C5lFaX5Yilt1sOJ3Kt9L6XVgq3G_X3f1Ue6L8br_nFPgfquByn3VGz2t-9AGssRv-jQjBq5-1nETqdI5FLSkWGd37yexe2KbpTbJ-z9SX2m7ChPVPb_A6-cCR8qqvOJRumqL2S3Dmc7VycyQJzZ8fglOjnV9Vxr5rcNsID038Wub3-YMJxn7EDO-Gtc-qaHnZZm3Xs1Hxw8Ub2wFjXUHuNRZaM5bln_gsGFHQhD20teFCg8T_626H2-Y7vnVt4h5uuBNnZnJ2g0AVx9GulWeplTSb41-SEAgqzxKPWGSHSb0HzX51m951y3kA79ALR2FUCsR1-VLd_sl_fPE-4gDwWj-MpdR6ThVuejh6kR3qKwiHeIH3Jz2CBdmN-i5CEDIaB-rQMCKnZaPiKDSC_uSeb0GG2uaOYYoQJwLzCjLUNMft8TUr9QlYS4PGUI7PThBIZ23gW3VyXZfdciA1Gb-7Ej5_EF5B1tggN_Pztw6lVsIvMwVnt3bEHnt0DNF8gFsjO1SWsBhxeWho5ciF8fogwRgT5YT3K55pUBv93Am-2iTpW6jSL2jOP15H8N2TVnEsiW-iNiIENzBV1D0vYLRh6abPo4rvfNksmSKFS-nYDIBWky5YjGn7TfioJc9pJSLQwW4AOF-G5zltGM4YGKFkWzoaB3StAfE_sgwFMDgErAgbx1QdkprPgcnIOAgKxIyuFlrqIMT9KpY2rMRO0jetTOVPqoT7ACEyuTuwPljLKdPvZPwFVogGiKpPYUEvtwlb0GoRhGGAmNSumaBGd-c7qqggja6wilTWJLY7G7X5ybAfsJUnFAVXuMVif_YdYw4Psh5Kw4oYx2l_-Xev_p6vhlsQnOkw9fHcyMwg4hx_nmv0I4elHqBNEkdETSsgliwTgTSJily0L6EbPmRhB2eaMnnEEMcjJ0vhjVS_8xzPL9UFo-e64cRZnnqh1ym7TsBXdsgTGbXSrfyyA7DAw5WuQUnPdI9IcR_FTrOJboPsAcEA96Sky5eWrDrsL_qmCunOLQ0ieu6aXFB5PjPSpBy64s3NZf70eoGcSy6mne6hT9HNI2cAoRO8X-ir7elff4HoKL2lqtGL04XUsQ2Xax5kax2Tqa4sNHuJ2JkGdp5wLKb1L52PPw6-Igy9tXEf-tjJDkY_HPp2xm0GyuJwtFQgmpgI_hyE1ph9d2p1PG5mwWPH0DZxwrvMgqVl14EftMdQuhBuJp4HYcJWHtWpTFnaM-6WyQw8ffELyImCrlrBBXEX2NJ3_de4bRookas_dqa6-Osu0ySjpXRCXWZ8opwF7dCqzVXaA5RFqM3pT6bBgrmucpF_0LVI2iOGhRYDzR-n-R9Pf3fQ-GkGDU9qSQJ-K8xvLRUwwsf-_0zlFV1NbCi4m5ahOASK1IRMu5lpr3i3AOZoaeoQCr5v8hgJbaj3rF4DulhuXUAbC9zDzJuhFLkVdAKpfXYoCSf-hG04YhG78VsueuFqzR05x4SAOd2Uko6oc9BvYlIWPuxyL87yj4-UhtEafWm3GrGJcjHQqnpzaKW2vtigTOYVswId4zQ8dvMcUaioNr2uoiSycO_pjtiVoL1HITPBLAYJg2QwcUxvDehCZVpASJYIEEXVddLHO5VRHQLcWIQ9ZjF8Vc1bcy6hZL0LdGKhcF_dC7I9SSucbNCwTb-9so-jMkjPoZbGiLqzAoq6JoKH_-yEugpZOqThfDP6-9swi5jEfu2TzNEWtA6De1lsgTVU__JHXKir9h4jkxZ1OLkIQ5vJIPOetUJ5wxpmX3mtAQUtxRc9iulxEKJBQoS4DHhV5LifnTqOCFV_JlJNW6zPAjdd_M1_iKZFVYH542qd17DdaVws8MVHZruciAzCeyqrvky8s9MsoUz3cFs71mybqa35X8AtBahSfQ2ify3oeQ6PAgemp82EeRptFGV4Q93z7y30Nt0B7BlZlm3kKCBoamz5mjkBLhqNuwid74JzE0JSdiuIH0POp3B8EXMJxfDrCZj6eDSdWWDUXKn6cVc1yH3q-2TdFrq-jtQeaTR4oY0O_N-Z37UtHN0yyQBz2Ul_y9MBSAnr3PeAGyON8FpCZH7i2z_QSQTtTMJ1IlylIx2gRuORs84ePakX_8emlqK44HPnu69Q6SzKgyDgkPN6Mjh4xOu59wIGHSQQaeH2q4DD5hnW1fq7VLpLwkqsnxVDcs5Giq2vBCVTIJZ9fuUkJVZd-j9wlmXIDqG_-3GM7PtY5E4etABji8wKC1wnlUdYuI804qCanvNa9GAwq9hduLEHPtiSqYIIQPYWXlNX0SU7As7OC3OCmBbelDwBlwXNhk0zT5z3thuCiAqtTpn11qkxwxTgbnE4elpXqo6JhwyRrQaWZHWFN2Tp2SsNpKJjrEFKL3Vp8eWkysbGCUtKRMEDmo_zuZVF7BmxP5LqfhwMLOLeuryLJOVOLhxGjZnMIfoh3xeqMdB7sHFLe50nHQT1tBrMAMbp3WPyt7XJU9UXhsFTQGR38nvuEftgpNpIF8SGEzOXhSp143h6jNE5Ez_uCgfJOe6fZf-AsIkfMgJRLYyEtyZNymqcfC4AXxuVHH_qgwfca2sJrL_haac-Ln-ZffXgoGfAkr7rWb7Y1_rPXUwpYpQ4EPQ3pEwznKElOuTAnTlf9r8l9HS_2K0BSqXaGBNdIqTWIX40lSfvXeQMcpRiy5YnoPqxVp78Gw1BvBIclxB7EIsBDixSGyQMrW6--C_HTiYvFcMSUnuNMOC1FJLrCz-hIHAlC3dz2n6-i5-HYv67XlIt9YJtWGgqjTaAmMFAW2l-4ISrwpRxvmuXgUopMVX8TYPEL4qbJcIxTijycajFXYj3nhOvP038b_BXM5v5JDaHDvUBhImMKEEVqMhvcH7TUTlovsG71a53DHppW7rLZ2IL05ZDHeGKwXlUK5duzJ5RgUxuOtR1zRvu3rKZ_Hz7PqnDpAgZQtrAFtnF1BFyxFJvNENPsvafSpIpJp5NgZlnhUpqnBFXFcLjvcwuJ5sFohTQhDK6RE6hxrnLYpthUyAMWdUe48ixWqNOGZhXPnMn6BkWthXKlm9JwVsWNfKfHD22O7-Nnxk3Gi3dYDpU_lyzXUlmWBFfHX_1BJdxDLiwIgB6RQ9wOaYCRYYgl9VxuuGGLxzPm5BJllvrkiSjqEkaqRDO-vyNzrisvA5lYlX6S9fi1Mh07TX5gL-p209uv-ueGc-jsN5QKpWhND-p0vepHEL4k3PKP6msjaZPeGsnt0kzhZkMltmZsc0IMvPLrarlt7Fv6k4jcbKyAvwAZhnKsaozU3IcfQzOHRdJbeusX7Xyac1_ScpVYTd_2kcFmdP-xbS-uV4TP4FY8aJVZE0WjuHZgIo9JXGHNkyQoq7R_aMPl29V6lqFL3WRR6WHwPbP6OQzModBeeeGl4f_X6zy77J8rGj6cB4C8ULm0_MqWy0KUnSdJEugbvwIVU12CBGBEXEKW6GnrbQE8l7xNPRs_Z0ln8uGCJJNV3sTfFDdZxRviJmzXwhLJacLYvgyMx9Ogl0w1JqRs2lfp3QI12dkgZBcXuVnGQg0l1b0geaxlx4mJ9Z3GNdazHYA1Z3cqXRgMc4oxGdzw8-tItRISR1bqC7iQc5RGcII6okl1OhT3rcuKOHkfgFgpv8OQvZfpJCOFXvzEoLYat6QWytUZiwSmPT0dMRijkhwkslvV6olgEtecgci6n9QDL7kC0F1Mv59Ud_09yrtwyTrIagYVaCw8lxkHNmepPzYfi9e8T_W6LXz7eBv2RQZ2jQ7tBKd5fjcVXekL3o_XWzilR4R8-V51xWIkSRtcbMl43kePdQTj31lUTghAnAcJ4KVqSV3MeyV_pO7A0AxMtMwIh8nKN8R_8MsBVLg_RsOqBj_X8MN5yjEB3WUr1Mi0l8LS6l6YBcjtC33HuA1ivDnpuLHdVkoi4b8lYNw635kKW2MOo5UR5POfx9sUKUqaPcJOG85RVYu0kVO7bmIVm3ND05msjCIUGYIPCp-wkDYM-qs9iWwFxOIePaHzqTf2fepCrjSrtUOjbzv82vDugpS4Pmvo_KzCq7pZYf3pYVFux2YhcOq5BNv0Qk-395RAGujUKgEXM3w5EGDbEn0lS-HwVilnkI2_HcAszFjR-d7ztq1cj5FZBjmZUFGJFTUSIFxOqarePhjXKXNG6JEmt2hjqqjzWdkAOqi-XKyzCn54pqC5IOfAk5SEK9E4Cmd4ThTQKIKXgpwjxzOfiE5T8nXpJvztXQo8s6ZBoS3uxPesJm4PB8CBAoVmUwIKwg6mM9sBUOe8gLbuh2p56btXcQ2xvS3wY39-4k2T5oWanqg-hcupTl_0U6Pnmevn2wCRcUT50A3hEboOxDWQMHM2IqDLJuVjlbM4YDSn7_3Q5V2Oyy7-i89sXyWEkaIjRb4fc-QFCqNlgMfoj7qjoA_ACf2RuPsyBfwnhhKrLg-Ao4AXn3BYRo4T8wbBD1uS8ZtvfJrlwNgwh75EnoXHQQWgea6NtNkrdsYU6JV3vc21gKkUzDrU43frutH4qMgT6fWTfOo8zYxtKGBKyWVhAwTcyklW4z6COlAYAe5ZVd_Ul6ONrjmVD2i2DHYDLKhXBqD5Lrv8Gbq-ihOjfhEUPp1W31fbmDZGOLDPK9m14d751tzjUwMt_geqUPsYvAjJK-JTO3K6hmzCpZBKX0WDv1241_2N8dkIVWqWRaqx8HGXMFvaUAp6h4Rnid3-RMnzP5hHw8VkTXvYFMKs94lmVDxmlhwdxlslwz-H4iU8Lr_DaaDI4EO1LrdxrZD8DZFUOvQF6oCgyA1GbEhl-gXPdMp4mD83EaqHo9q4PiK-6powKjqxNMvVlYJprLqwB7Ipyl20JAHeZEghLMs2dOE5QOIgY6FwdOVH8Sz33Qzfl68lyycc5cUccskOPd_BCwoF_GDDJiCG41l9OPU3IT-tq-csQ0uaFJiZ2aaMPbTWdpwIZqZ7ZfOqv5WWqXAFR-F66YGgE15oW-ukopiNbKNRz6Mv0gW49HarMQyOF6E3wpr-xtmu9QYYxzPEGcy6vovM4WGYs5fJ5uu2J7tZwcsYUxgKK78GTUC_YAdlgUYMsIoW0kP8uAgaEsGKLq7FVIAj-kEuLoWU2kxedri6UDCkXnDyqygHEUq1B1rBz7sUguAFTfW01MsiqJsDh63CuA9Zv7UG9e7rHZ2kmlGPOgO23Sywsq5O2cw3-86GQHmIOW59WgPHAwoEXP_ZT2p_bjhJMbl1uT-VCS_8VhTW8FRele596yGd1Kl99sKdHsKgtf-KZqEXSoBLGLx7WlNbpvcE5mv_jgzB55gnH-8cij9FpEojau6CM5lTT4qfDPFJYbgTYGSknyEXFhRXVmkQ1SO7afNsSO_LSPEnMFw08QuP0MorWyWufpo_HDch-kb1U04vmDSlfFGWqmZIigiCmqY3oED8ttUtHJqI8qYj8XYM2aQk1NpvWX7opuSvYFY568p24NYupXJP0ueZ-oyNpdIdErWtLeaFaeP12MvQjYI8356puwFHuzVb5Geq-a57tv9FRE3LO2rtXLoSlN7aDvPCKXjEngoETwEvPIt4w9AlUxyrxAHYz0NGz69vUPo9-0Ef3qtP_BMTV9D8nfS11KvdqxFKqkv8sJYTNCZukKxmdiPvG-kijt9ppgXbuHbAs1Cr5dqQbdXsD0fCqiHBef2JzZW056Fmsd012__e5NAyA0J6uBOzepTfsmcGFxk9KefqhwWSsxnwf2Q3puJ5UZe0TyUAd3KBwx7h-z-uuo1wOIDXdmK48j8FFwSpZH0KF0lbXqBU6Qhs2PJv4NM4h0jVbEjRDGGs9yx7ehS2OhZP3yBbQLaGvZzsSW2CvDyUWK7xIJ242GdUq2DT8ID_4r8c0dvK2bsnwLq2CM30mGZ9QHzbtTjimfAkUbnNjaUaSuDV3Eq9S9lVLwyR7TPvZoQMJF1ByWJKvLejBL-HzDJUV-a1WIgKYul0b0MRPj481HkN96lCwbTNgQuhPY9iXwbqmryowBR-svy9jGAWi9sGzHcgFw0nyiw5oiJwK0yozyutemq4NLPD5awesIrafkkio5-M7TlA59zQeRBtq1P5YOWVLiocJIpAsOiUuwVIhmWtgGNq5pF8xqhrQUku2fv4e3tg_-zUo-bfmylXyYlMXL5p93zQ6bSDaunoD_FhjN0fDqlhptsRvpuMDvxauxSZWmVkKVcGM4QIFW9UZMYu9827veTPUSf-8-ljT8EQIASgg2aRyA7odUA2rdhk0YIGUZV9jGoTUsd2oOxk3P-u4bAx0cphTQuOx16u-qwdMH5EYCcI-230EYOoi_bwIZVYk3f-WKLl7ofPI_VK3qr1u1uoRJDVOHJdBYYCJkuW6isQCQgbq6VvFhCs9Tm4P3RhlA-w9_Y2vMaOoFQuzBZhF94mbiSxeyVIm_Fbu-OxphjfOyXA-xjYRhcH0gQYa3i7UUf0FhuTrtFT6sH81HHdr73KlvkVQxu1jP19Ue4xPNyoXcWPw0vtS18t0m9-08R4akGbrLRFYv_25Q_Vagl5ixFxPuJeZGA3AAX1wOOzZpCbvUn9CYQPfHxdXY8IhhmmI7hjs7reQGCWptvtoTca2ke7L5JQ1eDQ9Hs1wOQuVIOmrwS_cSF64pOhSRW4m7CigfBAZr-a-s9fVFILyALWsTuaCGKBzVZa4Dcn69tCo54bRg95ByBRv_81Lt-k84RXc_YRDc9iARVhFBHvlzPp5ZFM7hWo7pAJDfUJ7SzbqSTGRY1NjdDSjZXamyGc35PRzpEXqTHxLkBGpDLKCfPxiOeb4R_82jPMOfVpHF4KpAnkEgNRX4zBTbqoDGqpdes_ZZi85mDCWtU4fqn3iQ_WZGNZB8cHhYBRlxEPVPuPWgwZgTQf0FPPhPKHmL37yzCkWzLrgR-cKyZZ8BiXEnZcWXwvtxRU6bNynnUTAhWUg_ZdZk4kbV6z64aEjz1zWeMLyfI2E_8BsT9knG4zRtzvEfYQrWNLK9rVnrp2m1TDKElefWZkFYvST4U_2CK3051gsDoCqL-OBBULwB5t18IALPxAy-otvyQZbsDhl3IisUcBd93vHzmWCtx0_PNvIt6jYndH1RLf52PaoJbBhv2lfIu6TPlFj8fK2iLPfmuaq382_facA6CiXEicBudAxa-u518XnhLavMkzlr0DmqRYStfz4rsa9Rgog-RLeJrvK-QlQBWAFWIK4IWGSsSbGyMSMH8PlEtIB0Q1nEwPNEyVlOgmlZ7yV2BlWA6sS6XL38_tyOwrkV23dcZSy7NeAnOHCgtJjDDFlPTfuyaDhIzupVHQfnr3vhVFW9tm-re3CGTxel_0EnQqFnFxjNWtdci4nPSdrEjsm9ejar7FlrjOzq9jGpj1vLQxMwjL8yfOIakqvHK30OyQqsUM2xeRlZuZ02PEGaY2c3Dj-qae9QzE20pa5jG-ey099QHFYJ0OQdcdhyYbwDogr7xxbW3dq8vehPEMsPbO--knBU6RiL_e3hEeYbZeccOnhoU12k9x117Zhl1hrvdGSHylAavFc5C538cwBL0IqPAY0ZRxsFn20i9GLCm6p-CudrBnpkGfawTmLtk_CyowEAPDBiekL91GrQGdlr319D2hJNUHZRLKLtsvi1niStLqcIUYesZfGvqW9PnV81DXR8rtW9z-v8bP5wuFZHCNGX96O1MokvhYPxoPO57Z-c3cfG2nQ5YeAKpBTB-GXw4RmIOShKKr1AFLkANte4qbIXyRJfUieWcNN5T33RlyW6fDcj89VAzLS7DqOcPrlwKC0uY8w_GxqoNcpi9cSfH0kjCrr6mzXRVrStMutuHdj2_RqivPK9QEMv2RskuXhfXT5S91SQaZc6zUmZWifrNTksDryeiMRKct18q6hmbidDXWfZLs9Z_O2u_VEXIwi45hhmyYyjNXSJW36oIgMAzoGoUr6Gsk0WIk0tQT7T9gct4BDNMQd-aVvhzvMZExtcx7y54tmj5JQM44otY9-jOoYFBxp_AgpmcyXrOFZAyvFmz0Ut1USClgv3dWPZ56VzR4happlCuXByQOUtrONxgkpJ22BS5GalNwGPA8p7NLPa8-Ji1VyLphlyObPV8I-YQOtPjwATljW9E7ITqgF2mLj5CLrXmTOMfFDJcHePQ7cO1xfBqCsP1Ez7Ig2hMEA-7guS916gCyljMjGIyL9a35k2qFcPCpCJ0I5-RGRlq92YMrTDzU6BZTQ3nJ5f2GeiS69Xwvm6OC4hoIv-YL4J5_YFmAaiF7Hxcb17I02l8OCFdLkLKFIopVgFQxNYqElUh4WeGMN_L1aoQrgV8r2NP6FRIIZ2ZFFJaU9SmKnoelqIRvmfrNiFU4H65CzO2NVFRvPjJIYWCBAKBQfcZeUSpupZpl0zhN_xe7WedVUdeY4ZR5T5vcf0-8hfAC-Xdv_bCEtRVdmjix0rDWip-cR2MBsmeVag4tDB-ftQdczNiPPNbIxSVAXeiwC7qyaVAEJh9rr33zWG4vPU2bUPpHXICRkL1puxDVvIgvOIn8n3eGLWgW1w5rcwKEuQlrEH67SCNSmw4YK1561Zm8XpPhqZMG15j-MeHAh7s6BZ17k-PUUyP_hTG21h54FjeKt-Kwjb528y1DqNjZQfP9aRQYoSpKEix8Rk4hODq8MS-dS8HNH7uhm6T7otHS3VMwDos67fxit7jyiVlalXrkS5asBtPuaOkf1h_a0XIuzJeauMZ4pE-AmwP4NjEzOmXgdmA8qvUyxmmaTLybyscSGHfs6OzpGdw6e-Ow3WIrvpW6nIf2Nky2KNtaYx3wrl56Pt0TdhvUnrJ4Xk4xoOe78OZ37Uqh5ICfEFgd45cHa9tM5adodn7cwOjihLRSU8L1j2--iAbC7R4Q7OjK5n_By8xMqkFh5029OW4O1mYRCKsQLZOtVbm7D15gTNZAD_fvrCBWw-C_EALEDwZXNKHJm-08B45Y_gTE4SIcsxWiirkEUXu6kFNEIR7l2vIlip4mS1ebACEtqLnc7te1RD2fyG5XKXVB_qXDYTzO45aWs908P_h6pW-0FyXoNB3Vb_7kVzhw_fkQSfPcC4l25PAQ85BSTOxd2AHWp4u7BvWRfvE7IrzR6uWY0rgcCFuEk5WIRL_AHS7TDM5hsPXhMcEXraA2UU4yrpSt67E4zXuPFUkBW76zRnRoBYs2N8dAJtG0mHPmTcjh2zpahSBJQRRnWmJYhiC1vlp8fNVMvjxuAsjFUcCtZRhx3cegVGF1DTyPu_1s0ZFittf2YV06GHjMiwmawc-WaUnnqp756gdAV381zTN7HJIE-e__nUUzzn5bcOBrYO5YJuyqJrXF3crcVY5jcHDeQsplkjG-icmEeMaB0wHalRGkakEezUhec5BJKIUAvLkanhwxl48lLkINZIFVLr4iUk1QscYgTWsWjKynrUDi1YD7mDqTf-nsDJ2VxiF8cdzWAQW3tb3caVmIpt2fdtoOYn9dS9CLB0CYUBHP0EsD93lhMoljCrNj7TwSKr4irvNkeWfUKCIWrNzl_LDhslvHvBTaHhdezb1SO9aTMNE51GoCWNkSJz0z0Ua8nMmhNWEAq-6c3PeKpY3cEcSPWKJcW__xjlWRtD_qpgkUGYVc-_tVW8GplaDKx36izkDEvOTWyJ8NaVJ3oo0wzXcnEZn0RGWrNwUzG1e21P8ijKn1F6pP0kRG1j6O7KWkXoVFA_Wtnnjna038Y-UxZFza681WCmtLaFg2H5AEuFY-_WDmHsFikuLXb1W13G6aNXLBWLSE2LrIaHFuaIlTorm2I0QKrvIF8FuXrFwtiRHrPz3PQqLnRd9eANw6UrxYGiojZlVO9t1IZbGa1OQasqRzqmTb1xNSRzg9j7U2TTS1Nb7WOxi6HHfGFNIUkUkwpncRn8gCu0NwOEPo2KMIA9z9NxJwtn6KtyDJzplMvr_jR7vdVe8GY0XZ1iJuBKffZVDUXXb4WfTDQBvNgvW_AWK14UxANM6X89r6LUnH70zqj5hds0bpEbgPng-iyarWY1SJg7P8BPjU8AXmCf45xL6Txvr3I5jX9Qp0ez46KM1PIVOKj9bUF719gfCzGF8oDD1kL8_DbBQt5RXRFQLKID5Bc9MerUCQWNHew6QKOYQBhSqEoZlhFYmYFsGArHrVnPkMD01pfRsPXLMdNrBNZieu-hnNXyXg1OG9fJ2_lC-sYuVlHigOlv3t0vpc7msen9H1az7tp2Fd6MvPgXduoI_zPXB16bseSIuApAW9Ua-d7Y-Ubcn3dneSDgi91MDMB3jqjkKrE5l_H4lF4GMKeE2D5cOKD7GnHthTwCiE46oZDlEGSrPCumZOhh3casXRkfTlBe9yeNYKEm2JXJfDAMfYamSubISZQ2tDU1uBmZNgxI7GsM0cHY0FQ40vjjfx7gDcrrj_HMMiyhkvfoWh_DgTjl-TOiX9YDUO2KhR8zWCL9nFbDhAaIbZXpNI1SlowkZv4c6qhiY_0P5nvHOubTGW-VafTOSoRZxgDiYzCZaK-JHwvBq5RRFizKjSezFdkB0al6RzjQ0H7QaP8cw84UfVdVXTuuBuJKjSM6jCf3P6MQCjQexZxfBOXET92LSC3QdQzZjtO9PBs-gPtYmLQwb7Zu4Cqdq6Je08jorl4oN0lav2YwSTLwFUqeju3FijBeqWEp3r4iVxzokNnIjzw7m4_QnW09YFlja1NpttOgQ';
+function b64u(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return Uint8Array.from(atob(s),c=>c.charCodeAt(0)); }
+async function openInvite(){
+  const m=location.hash.match(/k=([A-Za-z0-9_-]+)/); let key=m?m[1]:null;
+  try{ if(key) localStorage.setItem('omni_trk_inv',key); else key=localStorage.getItem('omni_trk_inv'); }catch(e){}
+  if(m) history.replaceState(null,'',location.pathname+location.search);
+  if(!key||!INVITE||INVITE.indexOf('__')===0) return null;
+  try{ const raw=b64u(INVITE), iv=raw.slice(0,12), ct=raw.slice(12);
+    const k=await crypto.subtle.importKey('raw',b64u(key),'AES-GCM',false,['decrypt']);
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv},k,ct); return JSON.parse(new TextDecoder().decode(pt)); }catch(e){ return null; }
+}
+
+/* ---------- sync ---------- */
+/* storage: Firestore doc trk/{uid} holding the gzipped state, with a version number for compare-and-swap */
+let FSDB=null;
+function fdb(){ if(!FSDB) FSDB=firebase.firestore(); return FSDB; }
+async function gz(str){ if(typeof CompressionStream==='undefined') return null; const st=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip')); return new Uint8Array(await new Response(st).arrayBuffer()); }
+async function gunz(u8){ const st=new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip')); return await new Response(st).text(); }
+async function readDoc(d){ if(!d||!d.exists) return {state:null,savedAt:0,version:0}; const x=d.data(); let st=null;
+  try{ st=x.z?JSON.parse(await gunz(x.z.toUint8Array())):(x.j?JSON.parse(x.j):null); }catch(e){ st=null; }
+  return {state:st,savedAt:x.savedAt||0,version:x.version||0}; }
+async function api(method,path,body){
+  const u=firebase.auth().currentUser; if(!u) throw new Error('signed out');
+  const ref=fdb().collection('trk').doc(u.uid);
+  if(method==='GET'){ const d=await ref.get({source:'server'}); return {status:200,body:await readDoc(d)}; }
+  const json=JSON.stringify(body.state), z=await gz(json);
+  const payload=z?{z:firebase.firestore.Blob.fromUint8Array(z)}:{j:json};
+  payload.savedAt=Number(body.savedAt)||Date.now(); payload.at=firebase.firestore.FieldValue.serverTimestamp();
+  let res=null;
+  await fdb().runTransaction(async tx=>{ const d=await tx.get(ref); const cur=d.exists?(d.data().version||0):0;
+    if(body.version!=null&&Number(body.version)!==cur){ res={conflict:d}; return; }
+    tx.set(ref,Object.assign({},payload,{version:cur+1})); res={version:cur+1}; });
+  if(res&&res.conflict) return {status:409,body:await readDoc(res.conflict)};
+  return {status:200,body:{version:res.version}};
+}
+let pushT=null;
+onSave=function(){ if(MODE!=='live') return; PENDING=true; clearTimeout(pushT); pushT=setTimeout(push,1200); };
+function cacheNow(){ try{ localStorage.setItem(cacheKey(),JSON.stringify(S)); }catch(e){} }
+/* push never uses a blind write: without a known server version it pulls and merges first */
+async function push(retry){
+  if(MODE!=='live'||!S||!S.TRK) return;
+  if(PUSHING){ clearTimeout(pushT); pushT=setTimeout(push,800); return; }
+  if(VERSION==null){ await pull(); if(VERSION==null) return; }
+  PUSHING=true; S.workouts=Math.max(1,L().sessions.length); const sentAt=S.savedAt;
+  try{ const r=await api('POST','/sync/state',{state:S,savedAt:S.savedAt,version:VERSION});
+    if(r.status===200){ VERSION=r.body.version; LAST_SYNC=Date.now(); SYNC_ERR=''; if(S.savedAt===sentAt) PENDING=false; else { clearTimeout(pushT); pushT=setTimeout(push,800); } }
+    else if(r.status===409&&r.body&&!retry){ VERSION=r.body.version; if(r.body.state&&r.body.state.TRK){ setState(mergeStates(S,r.body.state)); cacheNow(); if(VIEW!=='session') render(); } PUSHING=false; return push(true); }
+    else { SYNC_ERR=(r.body&&r.body.error)||('error '+r.status); }
+  }catch(e){ SYNC_ERR='offline'; }
+  PUSHING=false; if(VIEW==='me') render();
+}
+async function flush(){ clearTimeout(pushT); if(PENDING) await push(); }
+/* pull merges whenever the server moved on, so nothing from another phone is ever overwritten */
+async function pull(){ try{ const r=await api('GET','/sync/state'); if(r.status!==200) return; const b=r.body;
+  if(b.state&&b.state.TRK&&b.version!==VERSION){ setState(mergeStates(S,b.state)); VERSION=b.version; cacheNow(); PENDING=true; if(VIEW!=='session') render(); clearTimeout(pushT); pushT=setTimeout(push,300); }
+  else VERSION=b.version==null?0:b.version; }catch(e){} }
+window.addEventListener('online',()=>{ if(MODE==='live'&&PENDING) push(); });
+setInterval(()=>{ if(MODE==='live'&&PENDING) push(); },30000);
+document.addEventListener('visibilitychange',()=>{ if(MODE!=='live'||!S||!S.TRK) return; if(document.visibilityState==='hidden') flush(); else pull(); });
+
+async function bootUser(u){
+  CACHE_ID=u.uid; let local=null; try{ local=JSON.parse(localStorage.getItem(cacheKey())||'null'); }catch(e){}
+  if(local&&!local.TRK) local=null;
+  $('scroll').innerHTML='<div style="padding:160px 0;text-align:center" class="sub">Loading your program…</div>';
+  let server=null, ok=false;
+  try{ const r=await api('GET','/sync/state'); if(r.status===200){ server=r.body||{}; ok=true; VERSION=server.version==null?0:server.version; } }catch(e){}
+  const sv=ok&&server.state&&server.state.TRK?server.state:null;
+  const invOk=INV&&INV.profile&&(INV.profile.email||'').toLowerCase()===(u.email||'').toLowerCase();
+  if(sv&&local){ setState(mergeStates(local,sv)); cacheNow(); LAST_SYNC=Date.now(); PENDING=true; onSave(); }
+  else if(sv){ setState(sv); cacheNow(); LAST_SYNC=Date.now(); }
+  else if(local){ setState(local); PENDING=true; if(ok) onSave(); }          // offline, or server has nothing yet: keep what is on this phone
+  else if(!ok){ $('scroll').innerHTML=`<div style="padding:120px 10px 0;text-align:center"><h1 class="h3">Can't reach the server</h1><p class="sub" style="margin-top:10px;font-size:15px">Check your connection and try again. Nothing has been lost.</p><button class="btn black" style="margin-top:20px" onclick="bootUser(firebase.auth().currentUser)">Try again</button></div>`; return; }
+  else if(invOk){ const s=freshState(INV.plan,INV.profile); if(server.state) s.LEGACY=server.state; setState(s); save(); }
+  else { $('scroll').innerHTML=`<div style="padding:120px 10px 0;text-align:center"><h1 class="h3">No program on this account yet</h1><p class="sub" style="margin-top:10px;font-size:15px">${INV?'This link was made for '+esc(INV.profile.email)+'. You signed in as '+esc(u.email)+'.':'Open the link Siddharth emailed you on this phone, then sign in again.'}</p><button class="btn grey" style="margin-top:20px" onclick="signOut()">Sign out</button></div>`; return; }
+  S.profile.email=S.profile.email||u.email; closeStale(); VIEW='today'; HIST=[]; render();
+  const live=L().sessions.find(s=>!s.endedAt&&s.date===today()); if(live) snack('You have a workout in progress');
+}
+function bootLive(){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  firebase.auth().onAuthStateChanged(u=>{ if(u) bootUser(u); else { if(INV&&INV.profile){ AUTH.email=INV.profile.email; } else AUTH.mode='signin'; showAuth(); } });
+}
+
+window.addEventListener('hashchange',async()=>{ if(MODE!=='live') return; const inv=await openInvite(); if(inv){ INV=inv; if(!firebase.auth().currentUser){ AUTH={mode:'create',email:inv.profile.email,msg:'',busy:false}; showAuth(); } else if(!S||!S.TRK) bootUser(firebase.auth().currentUser); } });
+/* ---------- demo ---------- */ function markCtl(){} function demoFresh(){} const PLAN_DEMO={};
+/*DEMO_END*/ /* ---------- start ---------- */
+(async function(){
+  layer();
+  if(MODE==='demo'){ CACHE_ID='demo'; demoFresh(PLAN_DEMO.start); return; }
+  INV=await openInvite();
+  bootLive();
+})();
+
+</script>
+</body>
+</html>
